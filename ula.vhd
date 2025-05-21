@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
-entity ULA is
+entity ula is
     port (
         entrada_A : in unsigned(15 downto 0);
         entrada_B : in unsigned(15 downto 0);
@@ -12,9 +12,9 @@ entity ULA is
         flag_neg : out std_logic;
         flag_carry : out std_logic
     );
-end entity ULA;
+end entity ula;
 
-architecture a_ULA of ULA is
+architecture a_ULA of ula is
     signal resultado_temp : unsigned(15 downto 0) := (others => '0');
     signal carry_temp : std_logic := '0';
     signal soma_temp : unsigned(16 downto 0);  -- Um bit extra para o carry

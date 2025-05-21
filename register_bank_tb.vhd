@@ -19,120 +19,246 @@ architecture a_register_bank_tb of register_bank_tb is
 
   -- Sinais para conectar ao componente
   constant period_time  : time := 100 ns;
-  signal    finished,clk_s,rst_s,wr_en_s    : std_logic := '0';
+  signal    finished,clk_s,wr_en_s    : std_logic := '0';
+  signal    rst_s : std_logic := '1'; -- Inicializa reset como ativo
   signal    data_in_s,data_out_s : unsigned(15 downto 0) := (others => '0');
   signal    reg_code_s : unsigned(2 downto 0) := (others => '0');
 
+  -- Sinais para melhor visualização
+  signal teste_atual : integer := 0; -- Sinal para identificar fase de teste atual
+
   -- Instanciação do componente
-  begin
-    UTT: register_bank port map (
-      data_in   => data_in_s,
-      clk       => clk_s,
-      wr_en     => wr_en_s,
-      reg_code  => reg_code_s,
-      rst       => rst_s,
-      data_out  => data_out_s
-    );
+begin
+  UTT: register_bank port map (
+    data_in   => data_in_s,
+    clk       => clk_s,
+    wr_en     => wr_en_s,
+    reg_code  => reg_code_s,
+    rst       => rst_s,
+    data_out  => data_out_s
+  );
 
-    --reseta
-  reset_global:process
-  begin
-    rst_s <= '1';
-    wait for 200 ns; -- period_time*2
-    rst_s <= '0';
-    wait;
-  end process;
 
+  -- Tempo total da simulação
   sim_time_proc:process
   begin
-    wait for 10 us;     -- <== TEMPO TOTAL DA SIMULAÇÃO!!!
+    wait for 20 us; -- Tempo suficiente para todos os testes
     finished <= '1';
     wait;
   end process;
 
+  -- Geração de clock
   clk_proc:process
   begin
-    while finished /= '1' loop  -- gera clock até que sim_time_proc termine
+    while finished /= '1' loop
       clk_s <= '0';
-      wait for 50 ns; -- metade do periodo
+      wait for 50 ns;
       clk_s <= '1';
-      wait for 50 ns; -- metade do periodo
+      wait for 50 ns;
     end loop;
     wait;
   end process clk_proc;
 
-process
+  -- Processo de teste principal
+  test_proc: process
   begin
+    report "Testbench iniciado" severity note;
+    
+    -- Inicialização
+    wr_en_s <= '0';
+    data_in_s <= (others => '0');
+    reg_code_s <= "000";
+    teste_atual <= 0;
+    
+     -- Reset inicial
+    rst_s <= '1'; -- Reset ativo
+    wait for 200 ns;
+    rst_s <= '0'; -- Desativa reset
+    
+    -- Espera um pouco para garantir
+    wait for 100 ns;
+    teste_atual <= 1; -- Indicador para GTKWave
+    report "Reset completo, iniciando testes" severity note;
+    
     -- Teste 1: Escreve nos registradores
-
-    wait for 200 ns; -- espera o reset
     wr_en_s <= '1';
 
-    --reg1: Escreve no registrador 0
-    data_in_s <= "0000000000000001";
+    -- Escreve 1 no registrador 0
+    data_in_s <= x"0001";
     reg_code_s <= "000";
     wait for period_time;
 
-    --reg2: Escreve no registrador 1
-    data_in_s <= "0000000000000010";
+    -- Escreve 2 no registrador 1
+    data_in_s <= x"0002";
     reg_code_s <= "001";
     wait for period_time;
 
-    --reg3: Escreve no registrador 2
-    data_in_s <= "0000000000000011";
+    -- Escreve 3 no registrador 2
+    data_in_s <= x"0003";
     reg_code_s <= "010";
     wait for period_time;
 
-    --reg4: Escreve no registrador 3
-    data_in_s <= "0000000000000100";
+    -- Escreve 4 no registrador 3
+    data_in_s <= x"0004";
     reg_code_s <= "011";
     wait for period_time;
 
-    --reg5: Escreve no registrador 4
-    data_in_s <= "0000000000000101";
+    -- Escreve 5 no registrador 4
+    data_in_s <= x"0005";
     reg_code_s <= "100";
     wait for period_time;
 
-    --reg6: Escreve no registrador 5
-    data_in_s <= "0000000000000110";
+    -- Escreve 6 no registrador 5
+    data_in_s <= x"0006";
     reg_code_s <= "101";
     wait for period_time;
+    
+    report "Escrita em registradores completa" severity note;
+    teste_atual <= 2; -- Indicador para GTKWave
 
-
-    -- Teste 2: escreve nos registradores com wr_en desligado
-    wait for 200 ns; -- espera o reset
-
-     wr_en_s <= '0';
-
-    --reg1: Escreve no registrador 0
-    data_in_s <= "0000000000000000";
+    -- Teste 2: Lê todos os registradores
+    wr_en_s <= '0';
+    
+    -- Lê registrador 0, deve mostrar 1
     reg_code_s <= "000";
     wait for period_time;
-
-    --reg2: Escreve no registrador 1
-    data_in_s <= "0000000000000000";
+    assert data_out_s = x"0001" report "Erro na leitura do registrador 0" severity error;
+    
+    -- Lê registrador 1, deve mostrar 2
     reg_code_s <= "001";
     wait for period_time;
-
-    --reg3: Escreve no registrador 2
-    data_in_s <= "0000000000000000";
+    assert data_out_s = x"0002" report "Erro na leitura do registrador 1" severity error;
+    
+    -- Lê registrador 2, deve mostrar 3
     reg_code_s <= "010";
     wait for period_time;
-
-    --reg4: Escreve no registrador 3
-    data_in_s <= "0000000000000000";
+    assert data_out_s = x"0003" report "Erro na leitura do registrador 2" severity error;
+    
+    -- Lê registrador 3, deve mostrar 4
     reg_code_s <= "011";
     wait for period_time;
-
-    --reg5: Escreve no registrador 4
-    data_in_s <= "0000000000000000";
+    assert data_out_s = x"0004" report "Erro na leitura do registrador 3" severity error;
+    
+    -- Lê registrador 4, deve mostrar 5
     reg_code_s <= "100";
     wait for period_time;
-
-    --reg6: Escreve no registrador 5
-    data_in_s <= "0000000000000000";
+    assert data_out_s = x"0005" report "Erro na leitura do registrador 4" severity error;
+    
+    -- Lê registrador 5, deve mostrar 6
     reg_code_s <= "101";
     wait for period_time;
-    wait;
-  end process;
+    assert data_out_s = x"0006" report "Erro na leitura do registrador 5" severity error;
+    
+    report "Leitura de registradores completa" severity note;
+    teste_atual <= 3; -- Indicador para GTKWave
+
+    -- Teste 3: Tenta escrever com wr_en desligado
+    data_in_s <= x"FFFF"; -- Valor diferente para confirmar que não vai mudar
+    
+    -- Tenta escrever FFFF no registrador 0
+    reg_code_s <= "000";
+    wait for period_time;
+    
+    -- Lê registrador 0 novamente, deve continuar 1
+    reg_code_s <= "000";
+    wait for period_time;
+    assert data_out_s = x"0001" report "Escrita indevida com wr_en=0" severity error;
+    
+    report "Teste de escrita bloqueada completo" severity note;
+    teste_atual <= 4; -- Indicador para GTKWave
+
+    -- Teste 4: Escreve com wr_en ligado novamente
+    wr_en_s <= '1';
+    
+    -- Escreve FF no registrador 2
+    data_in_s <= x"00FF";
+    reg_code_s <= "010";
+    wait for period_time;
+    
+    -- Lê registrador 2, deve mostrar FF
+    wr_en_s <= '0';
+    reg_code_s <= "010";
+    wait for period_time;
+    assert data_out_s = x"00FF" report "Erro na escrita do registrador 2" severity error;
+
+    -- Lê todos os registradores novamente para confirmar que só o 2 mudou
+    reg_code_s <= "000"; -- Deve mostrar 1
+    wait for period_time;
+    assert data_out_s = x"0001" report "Registrador 0 alterado indevidamente" severity error;
+    
+    reg_code_s <= "001"; -- Deve mostrar 2
+    wait for period_time;
+    assert data_out_s = x"0002" report "Registrador 1 alterado indevidamente" severity error;
+    
+    reg_code_s <= "010"; -- Deve mostrar FF
+    wait for period_time;
+    assert data_out_s = x"00FF" report "Registrador 2 não foi alterado corretamente" severity error;
+    
+    reg_code_s <= "011"; -- Deve mostrar 4
+    wait for period_time;
+    assert data_out_s = x"0004" report "Registrador 3 alterado indevidamente" severity error;
+    
+    reg_code_s <= "100"; -- Deve mostrar 5
+    wait for period_time;
+    assert data_out_s = x"0005" report "Registrador 4 alterado indevidamente" severity error;
+    
+    reg_code_s <= "101"; -- Deve mostrar 6
+    wait for period_time;
+    assert data_out_s = x"0006" report "Registrador 5 alterado indevidamente" severity error;
+    
+    report "Teste de escrita seletiva completo" severity note;
+    teste_atual <= 5; -- Indicador para GTKWave
+
+    -- Teste 5: Verificar comportamento com reset
+    rst_s <= '1';
+    wait for period_time*2; -- Espera 2 ciclos para garantir que o reset seja aplicado
+    rst_s <= '0';
+    wait for period_time; -- Espera mais um ciclo após desativar o reset
+    
+    -- Lê todos os registradores novamente, devem estar zerados
+    reg_code_s <= "000"; -- Deve mostrar 0
+    wait for period_time;
+    assert data_out_s = x"0000" report "Reset falhou para registrador 0" severity error;
+    
+    reg_code_s <= "001"; -- Deve mostrar 0
+    wait for period_time;
+    assert data_out_s = x"0000" report "Reset falhou para registrador 1" severity error;
+    
+    reg_code_s <= "010"; -- Deve mostrar 0
+    wait for period_time;
+    assert data_out_s = x"0000" report "Reset falhou para registrador 2" severity error;
+    
+    reg_code_s <= "011"; -- Deve mostrar 0
+    wait for period_time;
+    assert data_out_s = x"0000" report "Reset falhou para registrador 3" severity error;
+    
+    reg_code_s <= "100"; -- Deve mostrar 0
+    wait for period_time;
+    assert data_out_s = x"0000" report "Reset falhou para registrador 4" severity error;
+    
+    reg_code_s <= "101"; -- Deve mostrar 0
+    wait for period_time;
+    assert data_out_s = x"0000" report "Reset falhou para registrador 5" severity error;
+    
+    report "Teste de reset completo" severity note;
+    teste_atual <= 6; -- Teste adicional
+    
+    -- Teste adicional: Reescreve nos registradores após reset
+    wr_en_s <= '1';
+    
+    -- Escreve 42 no registrador 3
+    data_in_s <= x"002A"; -- 42 em hex
+    reg_code_s <= "011";
+    wait for period_time;
+    
+    -- Lê registrador 3
+    wr_en_s <= '0';
+    wait for period_time;
+    assert data_out_s = x"002A" report "Erro na escrita após reset" severity error;
+    
+    report "Testbench concluido com sucesso" severity note;
+    teste_atual <= 7; -- Fim dos testes
+    
+    wait; -- Finaliza o processo de teste
+  end process test_proc;
 end architecture;
