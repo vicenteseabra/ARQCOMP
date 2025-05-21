@@ -14,7 +14,7 @@ entity ULA is
     );
 end entity ULA;
 
-architecture behavior of ULA is
+architecture a_ULA of ULA is
     signal resultado_temp : unsigned(15 downto 0) := (others => '0');
     signal carry_temp : std_logic := '0';
     signal soma_temp : unsigned(16 downto 0);  -- Um bit extra para o carry
@@ -27,7 +27,7 @@ begin
 
     -- Atribuição do resultado
     resultado_temp <= soma_temp(15 downto 0);
-    
+
     -- Flag de carry (bit 16 da soma/subtração)
     carry_temp <= soma_temp(16) when selec_op = "00" else  -- Carry para soma
                   not soma_temp(16) when selec_op = "01" else  -- Carry para subtração (invertido)
@@ -35,7 +35,7 @@ begin
 
     -- Sinais de saída
     resultado <= resultado_temp;
-    flag_zero <= '1' when resultado_temp = 0 else '0';
+    flag_zero <= '1' when resultado_temp = "000000000000000" else '0';
     flag_neg <= resultado_temp(15);
     flag_carry <= carry_temp;
-end architecture behavior;
+end architecture a_ULA;
