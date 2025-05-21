@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity reg16bits_tb is
-end entity;
+end ;
 
 architecture a_reg16bits_tb of reg16bits_tb is
   component reg16bits is
@@ -19,8 +19,8 @@ architecture a_reg16bits_tb of reg16bits_tb is
   -- Sinais para conectar ao componente
   constant period_time  : time := 100 ns;
 
-  signal    finished,clk_s,rst_s,wr_en_s    : std_logic := '0';
-  signal    data_in_s,data_out_s : unsigned(15 downto 0) := (others => '0');
+  signal    finished,clk_s,rst_s,wr_en_s    :   std_logic := '0';
+  signal    data_in_s,data_out_s            :   unsigned(15 downto 0) := "0000000000000000";
 
   -- Instanciação do componente
 begin
@@ -59,27 +59,23 @@ begin
     wait;
   end process clk_proc;
 
-process                      -- sinais dos casos de teste
+  process                      -- sinais dos casos de teste
    begin
     wait for 200 ns;  -- <== TEMPO DE ESPERA ANTES DO INICIO DOS TESTES
       --teste 1: escrita de 16 bits
       wr_en_s <= '1';
       data_in_s <= "0000000000000001";
       wait for 100 ns;
-      wr_en_s <= '0';
-      wait for 100 ns;
 
         --teste 2: sobreescrita de 16 bits
-      wr_en_s <= '1';
       data_in_s <= "0000000000000010";
       wait for 100 ns;
-      wr_en_s <= '0';
-      wait for 100 ns;
+
 
       --teste 3: escrita de 16 bits pra enable 0
       wr_en_s <= '0';
       data_in_s <= "0000000000000011";
       wait for 100 ns;
       wait;
-   end process;
-end architecture a_reg16bits_tb;
+  end process;
+end architecture;
