@@ -1,19 +1,22 @@
 v 4
-file . "ula_acc_bank_tb.vhd" "c8f8e790789f369d7cec624fdcdad09471410464" "20250521214941.666":
-  entity ula_acc_bank_tb at 1( 0) + 0 on 21;
-  architecture a_ula_acc_bank_tb of ula_acc_bank_tb at 8( 116) + 0 on 22;
-file . "register_bank.vhd" "7170d3e76db9277fd1d0bc35ea20fa2ef72a75e2" "20250521214928.735":
-  entity register_bank at 1( 0) + 0 on 17;
-  architecture a_register_bank of register_bank at 16( 392) + 0 on 18;
-file . "accumulator.vhd" "ffa3a2cc99f55e31d9a5132b3795088b04abd608" "20250521214915.765":
-  entity accumulator at 1( 0) + 0 on 13;
-  architecture a_accumulator of accumulator at 13( 272) + 0 on 14;
-file . "reg16bits.vhd" "f7daa9b95babb99244220eb0d9627d8aea846475" "20250521214909.763":
-  entity reg16bits at 1( 0) + 0 on 11;
-  architecture a_reg16bits of reg16bits at 14( 316) + 0 on 12;
-file . "ula.vhd" "262c6c331b5331b0a51fe3b9b601b18bda93a184" "20250521214923.037":
-  entity ula at 1( 0) + 0 on 15;
-  architecture a_ula of ula at 17( 422) + 0 on 16;
-file . "ula_acc_bank.vhd" "52c7b60dfdef874db67786ceb472add721720ef3" "20250521214936.024":
-  entity ula_acc_bank at 1( 0) + 0 on 19;
-  architecture a_ula_acc_bank of ula_acc_bank at 30( 792) + 0 on 20;
+file . "ula_acc_bank.vhd" "52c7b60dfdef874db67786ceb472add721720ef3" "20250522020857.982":
+  entity ula_acc_bank at 1( 0) + 0 on 33;
+  architecture a_ula_acc_bank of ula_acc_bank at 30( 792) + 0 on 34;
+file . "ula.vhd" "262c6c331b5331b0a51fe3b9b601b18bda93a184" "20250522020805.318":
+  entity ula at 1( 0) + 0 on 29;
+  architecture a_ula of ula at 17( 422) + 0 on 30;
+file . "reg16bits.vhd" "e0fda71b664fa863c2fecdf78e03a20947a30bf3" "20250522020627.944":
+  entity reg16bits at 1( 0) + 0 on 23;
+  architecture a_reg16bits of reg16bits at 14( 316) + 0 on 24;
+file . "accumulator.vhd" "ffa3a2cc99f55e31d9a5132b3795088b04abd608" "20250522020814.428":
+  entity accumulator at 1( 0) + 0 on 31;
+  architecture a_accumulator of accumulator at 13( 272) + 0 on 32;
+file . "register_bank.vhd" "7170d3e76db9277fd1d0bc35ea20fa2ef72a75e2" "20250522020748.565":
+  entity register_bank at 1( 0) + 0 on 27;
+  architecture a_register_bank of register_bank at 16( 392) + 0 on 28;
+file . "ula_acc_bank_tb.vhd" "c8f8e790789f369d7cec624fdcdad09471410464" "20250522020952.074":
+  entity ula_acc_bank_tb at 1( 0) + 0 on 35;
+  architecture a_ula_acc_bank_tb of ula_acc_bank_tb at 8( 116) + 0 on 36;
+file . "register_bank_tb.vhd" "3adf47a8227014d824255eef5e7030bffbf37d53" "20250522020738.027":
+  entity register_bank_tb at 1( 0) + 0 on 25;
+  architecture a_register_bank_tb of register_bank_tb at 8( 117) + 0 on 26;
