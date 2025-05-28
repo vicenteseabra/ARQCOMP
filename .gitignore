@@ -1,2 +1,7 @@
 *.ghw
 *.cf
+*.exe
+*.vcd
+*.o
+
+makefile
