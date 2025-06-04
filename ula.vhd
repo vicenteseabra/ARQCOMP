@@ -23,6 +23,7 @@ begin
     soma_temp <= ('0' & entrada_A) + ('0' & entrada_B) when selec_op = "00" else
                  ('0' & entrada_A) - ('0' & entrada_B) when selec_op = "01" else
                  ('0' & (entrada_A or entrada_B)) when selec_op = "10" else  -- Operação OR
+                 ('0' & entrada_B) when selec_op = "11" else -- Passar B (A é ignorado)
                  (others => '0');
 
     -- Atribuição do resultado
