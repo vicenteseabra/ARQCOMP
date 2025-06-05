@@ -2,260 +2,164 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
---------------------------------------------------------------------
--- ENTITY da UNIDADE DE CONTROLE
---------------------------------------------------------------------
 entity unidade_controle is
-   port(
-      clk        : in  std_logic;
-      rst        : in  std_logic;
+    port(
+        clk             : in  std_logic;
+        rst             : in  std_logic;
+        fsm_estado_in   : in  unsigned(1 downto 0); -- "00" Fetch, "01" Decode, "10" Execute
+        ir_instr_in     : in  unsigned(17 downto 0); -- Instrução do IR
 
-      -- monitoramento / depuração
-      estado     : out std_logic;                          -- 0=FETCH, 1=DECODE
-      pc_out     : out unsigned(6 downto 0);
-      instr_out  : out unsigned(17 downto 0);
+        -- Flags da ULA (para futuras instruções condicionais)
+        -- ula_zero_in     : in  std_logic;
+        -- ula_carry_in    : in  std_logic;
+        -- ula_neg_in      : in  std_logic;
 
-      ----------------------------------------------------------------
-      -- sinais de controle para o banco de registradores e ACC+ULA
-      ----------------------------------------------------------------
+        -- Sinais de controle para PC_ROM_Interface
+        pc_inc_en_out   : out std_logic;
+        pc_jump_en_out  : out std_logic;
+        pc_jump_addr_out: out unsigned(6 downto 0);
 
-      -- escrita no banco de registradores
-      bank_wr_en    : out std_logic;                       -- habilita escrita no banco
-      reg_code_wr   : out unsigned(2 downto 0);            -- código de 3 bits de qual R escrever
-      bank_data_in  : out unsigned(15 downto 0);           -- dado a entrar no banco
+        -- Sinais de controle para IR
+        ir_wr_en_out    : out std_logic;
 
-      -- leitura do banco de registradores (versão “reader”)
-      reg_code_rd   : out unsigned(2 downto 0);            -- qual registrador ler (fonte)
-      bank_read_data: in  unsigned(15 downto 0);           -- valor lido do banco (Rs)
-
-      -- escrita no acumulador (recebe saída da ULA)
-      acc_wr_en     : out std_logic;                       -- habilita escrita no ACC
-
-      -- seleção de operação da ULA (00=ADD, 01=SUB, 10=OR/inócuo)
-      alu_sel       : out unsigned(1 downto 0);
-
-      ----------------------------------------------------------------
-      -- saltos
-      ----------------------------------------------------------------
-
-      jump          : out std_logic;                       -- sinal “JMP”
-      jump_addr     : out unsigned(6 downto 0)             -- endereço absoluto de destino
-   );
+        -- Sinais de controle para Datapath_Core
+        dp_reg_wr_en_out  : out std_logic;
+        dp_reg_wr_addr_out: out unsigned(2 downto 0);
+        dp_reg_rd_addr_out: out unsigned(2 downto 0);
+        dp_acc_wr_en_out  : out std_logic;
+        dp_alu_sel_out    : out unsigned(1 downto 0);
+        dp_bank_in_sel_out: out std_logic;             -- '0': ULA_result, '1': Immediate
+        dp_imm_data_out   : out unsigned(15 downto 0)  -- Dado imediato para o datapath
+    );
 end entity unidade_controle;
 
---------------------------------------------------------------------
--- ARCHITECTURE da UNIDADE DE CONTROLE
---------------------------------------------------------------------
 architecture a_unidade_controle of unidade_controle is
+    -- Decodificação da Instrução
+    signal opcode    : unsigned(3 downto 0);
+    signal rd_field  : unsigned(4 downto 0); -- Campo Rd de 5 bits da instrução
+    signal rs_field  : unsigned(4 downto 0); -- Campo Rs de 5 bits da instrução
+    signal imm7_field: unsigned(6 downto 0); -- Campo imediato de 7 bits (com sinal)
+    signal jmp_addr_field: unsigned(6 downto 0); -- Campo de endereço de JMP
 
-   -----------------------------------------------------------------
-   -- 1) Componentes internos (FSM, PC, ROM)
-   -----------------------------------------------------------------
-   component maquina_estados is
-      port(
-         clk    : in  std_logic;
-         rst    : in  std_logic;
-         estado : out std_logic
-      );
-   end component;
+    -- Sinais de registrador (3 LSBs dos campos de 5 bits)
+    signal rd_reg_addr : unsigned(2 downto 0);
+    signal rs_reg_addr : unsigned(2 downto 0);
 
-   component pc is
-      port(
-         clk      : in  std_logic;
-         rst      : in  std_logic;
-         wr_en    : in  std_logic;
-         data_in  : in  unsigned(6 downto 0);
-         data_out : out unsigned(6 downto 0)
-      );
-   end component;
+    -- Constantes para ALU_SEL
+    constant ALU_ADD   : unsigned(1 downto 0) := "00";
+    constant ALU_SUB   : unsigned(1 downto 0) := "01";
+    constant ALU_PASS_B: unsigned(1 downto 0) := "10";
+    constant ALU_PASS_A: unsigned(1 downto 0) := "11"; -- Ou NOP ULA
 
-   component rom is
-      port(
-         clk      : in  std_logic;
-         endereco : in  unsigned(6 downto 0);
-         dado     : out unsigned(17 downto 0)
-      );
-   end component;
-
-
-   -----------------------------------------------------------------
-   -- 2) Sinais internos
-   -----------------------------------------------------------------
-
-   -- FSM (0=FETCH, 1=DECODE)
-   signal estado_s    : std_logic;
-
-   -- PC interno
-   signal pc_wr_en_s   : std_logic := '0';
-   signal pc_data_in_s : unsigned(6 downto 0) := (others => '0');
-   signal pc_data_out_s: unsigned(6 downto 0);
-
-   --  Instrução buscada na ROM
-   signal instr_s      : unsigned(17 downto 0);
-
-   -- Campos extraídos da instrução
-   signal opcode_s     : unsigned(3 downto 0);  -- instr_s(17 downto 14)
-   signal dest5_s      : unsigned(4 downto 0);  -- instr_s(11 downto 7)
-   signal src5_s       : unsigned(4 downto 0);  -- instr_s(6  downto 2)
-   signal imm6_s       : unsigned(5 downto 0);  -- instr_s(5  downto 0)
-   signal sign_im_s    : std_logic;             -- instr_s(6) (bit de sinal para LD)
-
-   -- Extração do endereço absoluto para JMP (7 bits)
-   signal abs_addr_s   : unsigned(6 downto 0);  -- instr_s(11 downto 5)
-
-   --Detecta se JMP (opcode = "1111")
-   signal jump_en_s    : std_logic;
-
-   -----------------------------------------------------------------
-   -- 3) Sinais de controle gerados na fase de DECODE (para atribuições concorrentes)
-   -----------------------------------------------------------------
-   signal bank_wr_en_i    : std_logic;
-   signal reg_code_wr_i   : unsigned(2 downto 0);
-   signal bank_data_in_i  : unsigned(15 downto 0);
-   signal reg_code_rd_i   : unsigned(2 downto 0);
-   signal acc_wr_en_i     : std_logic;
-   signal alu_sel_i       : unsigned(1 downto 0);
-   signal jump_i          : std_logic;
-   signal jump_addr_i     : unsigned(6 downto 0);
+    -- Opcodes definidos na ROM
+    constant NOP_OP        : unsigned(3 downto 0) := "0000";
+    constant MOV_RR_OP     : unsigned(3 downto 0) := "0001"; -- Rd <= Rs
+    constant ADD_ACC_OP    : unsigned(3 downto 0) := "0010"; -- ACC <= ACC + Rs
+    constant SUB_ACC_OP    : unsigned(3 downto 0) := "0011"; -- ACC <= ACC - Rs
+    constant LD_OP         : unsigned(3 downto 0) := "0100"; -- Rd <= Imm
+    constant MOV_ACC_RS_OP : unsigned(3 downto 0) := "0101"; -- ACC <= Rs
+    constant MOV_RD_ACC_OP : unsigned(3 downto 0) := "0110"; -- Rd <= ACC
+    constant JMP_OP        : unsigned(3 downto 0) := "1111";
 
 begin
+    -- Decodificadores de campos da instrução
+    opcode     <= ir_instr_in(17 downto 14);
+    rd_field   <= ir_instr_in(11 downto 7);
+    rs_field   <= ir_instr_in(6 downto 2); -- Para MOV_R_R, ADD_ACC, SUB_ACC, MOV_ACC_RS
+    imm7_field <= ir_instr_in(6 downto 0); -- Para LD (7 bits com sinal)
+    jmp_addr_field <= ir_instr_in(8 downto 2); -- Para JMP
 
-   -----------------------------------------------------------------
-   -- 4) Instanciação da máquina de estados
-   -----------------------------------------------------------------
-   fsm_inst : maquina_estados
-      port map(
-         clk    => clk,
-         rst    => rst,
-         estado => estado_s
-      );
+    -- Usar os 3 LSBs para endereçar os 6 registradores
+    rd_reg_addr <= rd_field(2 downto 0);
+    rs_reg_addr <= rs_field(2 downto 0);
 
-   -----------------------------------------------------------------
-   -- 5) Instanciação do PC
-   -----------------------------------------------------------------
-   pc_inst : pc
-      port map(
-         clk      => clk,
-         rst      => rst,
-         wr_en    => pc_wr_en_s,
-         data_in  => pc_data_in_s,
-         data_out => pc_data_out_s
-      );
+    -- Lógica de Controle Principal
+    process(fsm_estado_in, opcode, rd_reg_addr, rs_reg_addr, imm7_field, jmp_addr_field)
+    begin
+        -- Valores padrão (desliga a maioria dos controles)
+        pc_inc_en_out    <= '0';
+        pc_jump_en_out   <= '0';
+        pc_jump_addr_out <= (others => '0');
+        ir_wr_en_out     <= '0';
 
-   -----------------------------------------------------------------
-   -- 6) Instanciação da ROM
-   -----------------------------------------------------------------
-   rom_inst : rom
-      port map(
-         clk      => clk,
-         endereco => pc_data_out_s,
-         dado     => instr_s
-      );
+        dp_reg_wr_en_out   <= '0';
+        dp_reg_wr_addr_out <= (others => '0');
+        dp_reg_rd_addr_out <= (others => '0'); -- Padrão pode ser R0 ou não importa se não lê
+        dp_acc_wr_en_out   <= '0';
+        dp_alu_sel_out     <= ALU_PASS_A;      -- ULA em modo inócuo
+        dp_bank_in_sel_out <= '0';             -- Padrão: ULA_result para entrada do banco
+        dp_imm_data_out    <= (others => '0');
 
-   -----------------------------------------------------------------
-   -- 7) Extração de campos fixos da instrução
-   -----------------------------------------------------------------
-   opcode_s   <= instr_s(17 downto 14);
-   dest5_s    <= instr_s(11 downto  7);
-   src5_s     <= instr_s(6  downto  2);
-   imm6_s     <= instr_s(5  downto  0);
-   sign_im_s  <= instr_s(6);
-   abs_addr_s <= instr_s(11 downto 5);
+        case fsm_estado_in is
+            when "00" => -- FETCH
+                pc_inc_en_out <= '1'; -- Incrementa PC para a próxima instrução
+                ir_wr_en_out  <= '1'; -- Carrega a instrução no IR
 
-   -----------------------------------------------------------------
-   -- 8) Detecta JMP (opcode = "1111")
-   -----------------------------------------------------------------
-   jump_en_s <= '1' when opcode_s = "1111" else '0';
+            when "01" => -- DECODE
+                -- Nesta fase, podemos pré-configurar endereços de leitura se necessário,
+                -- mas a maioria da lógica de controle é ativada no EXECUTE.
+                -- Para operações que usam Rs, já podemos setar dp_reg_rd_addr_out.
+                case opcode is
+                    when MOV_RR_OP | ADD_ACC_OP | SUB_ACC_OP | MOV_ACC_RS_OP =>
+                        dp_reg_rd_addr_out <= rs_reg_addr;
+                    when others =>
+                        dp_reg_rd_addr_out <= (others => '0'); -- Ou um registrador padrão
+                end case;
 
-   -----------------------------------------------------------------
-   -- 9) Lógica do PC (sem processo, atribuições concorrentes)
-   --     - estado_s = '0' (FETCH): pc_wr_en_s = '0'
-   --     - estado_s = '1' (DECODE): pc_wr_en_s = '1'
-   --       * se jump_en_s = '1', pc_data_in_s <= abs_addr_s
-   --       * senão, pc_data_in_s <= pc_data_out_s + 1
-   -----------------------------------------------------------------
-   pc_wr_en_s   <= '1' when (estado_s = '1') else '0';
+            when "10" => -- EXECUTE
+                case opcode is
+                    when NOP_OP =>
+                        null; -- Nenhuma ação
 
-   pc_data_in_s <= abs_addr_s when (estado_s = '1' and jump_en_s = '1')
-                 else (pc_data_out_s + 1) when (estado_s = '1' and jump_en_s = '0')
-                 else (others => '0');  -- valor qualquer em FETCH
+                    when LD_OP => -- Rd <= Immediate
+                        dp_reg_wr_en_out   <= '1';
+                        dp_reg_wr_addr_out <= rd_reg_addr;
+                        dp_bank_in_sel_out <= '1'; -- Seleciona imediato para entrada do banco
+                        -- Estende sinal do imediato de 7 bits para 16 bits
+                        if imm7_field(6) = '1' then -- Negativo
+                            dp_imm_data_out <= "111111111" & imm7_field;
+                        else -- Positivo
+                            dp_imm_data_out <= "000000000" & imm7_field;
+                        end if;
 
-   -----------------------------------------------------------------
-   -- 10) Saídas de monitoramento (FSM, PC, INSTR)
-   -----------------------------------------------------------------
-   estado    <= estado_s;
-   pc_out    <= pc_data_out_s;
-   instr_out <= instr_s;
+                    when MOV_RR_OP => -- Rd <= Rs
+                        dp_reg_rd_addr_out <= rs_reg_addr; -- Fonte Rs
+                        dp_alu_sel_out     <= ALU_PASS_B;  -- ULA passa Rs
+                        dp_bank_in_sel_out <= '0';         -- Seleciona ULA_result para entrada do banco
+                        dp_reg_wr_en_out   <= '1';
+                        dp_reg_wr_addr_out <= rd_reg_addr; -- Destino Rd
 
-   -----------------------------------------------------------------
-   -- 11) Atribuições concorrentes para gerar sinais de controle
-   -----------------------------------------------------------------
+                    when ADD_ACC_OP => -- ACC <= ACC + Rs
+                        dp_reg_rd_addr_out <= rs_reg_addr;
+                        dp_alu_sel_out     <= ALU_ADD;
+                        dp_acc_wr_en_out   <= '1';
 
-   -- reg_code_rd_i: passa src5_s(2 downto 0) em DECODE, senão “000”
-   reg_code_rd_i <= src5_s(2 downto 0)
-                  when (estado_s = '1')
-                  else (others => '0');
+                    when SUB_ACC_OP => -- ACC <= ACC - Rs
+                        dp_reg_rd_addr_out <= rs_reg_addr;
+                        dp_alu_sel_out     <= ALU_SUB;
+                        dp_acc_wr_en_out   <= '1';
 
-   --  bank_wr_en_i: ativo em DECODE E opcode em {LD, MOV, ADD, SUB}
-   bank_wr_en_i <= '1'
-      when (estado_s = '1' and
-            (opcode_s = "0100"    -- LD
-           or opcode_s = "0001"    -- MOV
-           or opcode_s = "0010"    -- ADD
-           or opcode_s = "0011"))  -- SUB
-      else '0';
+                    when MOV_ACC_RS_OP => -- ACC <= Rs
+                        dp_reg_rd_addr_out <= rs_reg_addr;
+                        dp_alu_sel_out     <= ALU_PASS_B;
+                        dp_acc_wr_en_out   <= '1';
 
-   -- reg_code_wr_i: dest5_s(2 downto 0) em DECODE E opcode em {LD, MOV, ADD, SUB}
-   reg_code_wr_i <= dest5_s(2 downto 0)
-      when (estado_s = '1' and
-            (opcode_s = "0100"    -- LD
-           or opcode_s = "0001"    -- MOV
-           or opcode_s = "0010"    -- ADD
-           or opcode_s = "0011"))  -- SUB
-      else (others => '0');
+                    when MOV_RD_ACC_OP => -- Rd <= ACC
+                        dp_alu_sel_out     <= ALU_PASS_A;  -- ULA passa ACC
+                        dp_bank_in_sel_out <= '0';         -- Seleciona ULA_result (que é ACC)
+                        dp_reg_wr_en_out   <= '1';
+                        dp_reg_wr_addr_out <= rd_reg_addr;
 
-   --  bank_data_in_i:
-   --       - se LD: zero‐extend imm6_s
-   --       - se MOV: passa bank_read_data
-   --       - senão: zeros
-   bank_data_in_i <= ("0000000000" & imm6_s)
-      when (estado_s = '1' and opcode_s = "0100")  -- LD
-      else bank_read_data when (estado_s = '1' and opcode_s = "0001")  -- MOV
-      else (others => '0');
+                    when JMP_OP =>
+                        pc_jump_en_out   <= '1';
+                        pc_jump_addr_out <= jmp_addr_field;
+                        pc_inc_en_out    <= '0'; -- Não incrementa PC em JMP
 
-   -- acc_wr_en_i: ativo em DECODE E opcode em {ADD, SUB}
-   acc_wr_en_i <= '1'
-      when (estado_s = '1' and
-            (opcode_s = "0010"  -- ADD
-           or opcode_s = "0011"))-- SUB
-      else '0';
-
-   -- alu_sel_i:
-   -- "00" se ADD, "01" se SUB, "10" nos demais casos
-   alu_sel_i <= "00"
-      when (estado_s = '1' and opcode_s = "0010")  -- ADD
-      else "01" when (estado_s = '1' and opcode_s = "0011")  -- SUB
-      else "10";
-
-   -- jump_i: '1' se DECODE E opcode = "1111" (JMP), senão '0'
-   jump_i <= '1'
-      when (estado_s = '1' and opcode_s = "1111")  -- JMP
-      else '0';
-
-   -- jump_addr_i: abs_addr_s em DECODE E opcode = "1111", senão zeros
-   jump_addr_i <= abs_addr_s
-      when (estado_s = '1' and opcode_s = "1111")  -- JMP
-      else (others => '0');
-   -----------------------------------------------------------------
-   -- 12) Conexão dos sinais de controle internos para as portas de saída
-   -----------------------------------------------------------------
-   bank_wr_en    <= bank_wr_en_i;
-   reg_code_wr   <= reg_code_wr_i;
-   bank_data_in  <= bank_data_in_i;
-   reg_code_rd   <= reg_code_rd_i;
-   acc_wr_en     <= acc_wr_en_i;
-   alu_sel       <= alu_sel_i;
-   jump          <= jump_i;
-   jump_addr     <= jump_addr_i;
+                    when others => -- Instruções não implementadas
+                        null;
+                end case;
+            when others => null;
+        end case;
+    end process;
 
 end architecture a_unidade_controle;

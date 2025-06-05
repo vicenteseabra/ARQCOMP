@@ -4,29 +4,27 @@ use IEEE.numeric_std.all;
 
 entity accumulator is
     port(
-        clk, rst, wr_en: in std_logic;
-        data_in: in unsigned(15 downto 0);
-        data_out: out unsigned(15 downto 0)
+        clk      : in  std_logic;
+        rst      : in  std_logic;
+        wr_en    : in  std_logic;               -- Habilita escrita no acumulador
+        data_in  : in  unsigned(15 downto 0); -- Dado da ULA para o acumulador
+        data_out : out unsigned(15 downto 0)  -- Saída do acumulador para a ULA
     );
 end entity accumulator;
 
 architecture a_accumulator of accumulator is
-
-    signal data: unsigned(15 downto 0);
-
+    signal acc_value : unsigned(15 downto 0);
+begin
+    process(clk, rst)
     begin
-
-        process(clk, rst, wr_en)
-        begin
-            if rst = '1' then
-                data <= "0000000000000000";
-            elsif wr_en = '1' then
-                if rising_edge(clk) then
-                    data <= data_in;
-                end if;
+        if rst = '1' then
+            acc_value <= (others => '0');
+        elsif rising_edge(clk) then
+            if wr_en = '1' then
+                acc_value <= data_in;
             end if;
-        end process;
+        end if;
+    end process;
 
-        data_out <= data;
-
+    data_out <= acc_value;
 end architecture a_accumulator;

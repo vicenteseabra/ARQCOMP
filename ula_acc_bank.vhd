@@ -4,101 +4,93 @@ use IEEE.numeric_std.all;
 
 entity ula_acc_bank is
     port (
-        -- Global control signals
-        clk         : in std_logic;
-        rst         : in std_logic;
-        
-        -- Register bank control
-        bank_wr_en  : in std_logic;
-        reg_code    : in unsigned(2 downto 0);
-        bank_data_in : in unsigned(15 downto 0);
-        
-        -- Accumulator control
-        acc_wr_en   : in std_logic;
-        
-        -- ula control
-        selec_op    : in unsigned(1 downto 0);
-        
-        -- ula outputs
-        result      : out unsigned(15 downto 0);
-        flag_zero   : out std_logic;
-        flag_neg    : out std_logic;
-        flag_carry  : out std_logic
+        clk              : in  std_logic;
+        rst              : in  std_logic;
+
+        -- Sinais de Controle da UC
+        ctrl_reg_wr_en   : in  std_logic;
+        ctrl_reg_wr_addr : in  unsigned(2 downto 0);
+        ctrl_reg_rd_addr : in  unsigned(2 downto 0);
+        ctrl_acc_wr_en   : in  std_logic;
+        ctrl_alu_sel     : in  unsigned(1 downto 0);
+        ctrl_bank_in_sel : in  std_logic;             -- '0': ULA_result, '1': Immediate_data
+
+        immediate_data_in: in  unsigned(15 downto 0); -- Dado imediato da UC (para LD)
+
+        -- Saídas para UC (Flags)
+        ula_flag_zero    : out std_logic;
+        ula_flag_neg     : out std_logic;
+        ula_flag_carry   : out std_logic;
+
+        -- Saídas para Debug/Top-Level
+        acc_data_debug   : out unsigned(15 downto 0);
+        bank_data_debug  : out unsigned(15 downto 0); -- Saída do registrador lido
+        ula_result_debug : out unsigned(15 downto 0)
     );
 end entity ula_acc_bank;
 
 architecture a_ula_acc_bank of ula_acc_bank is
-    -- Register bank component
-    component register_bank is
-        port(
-            data_in   : in unsigned(15 downto 0);
-            clk       : in std_logic;
-            wr_en     : in std_logic;
-            reg_code  : in unsigned(2 downto 0);
-            rst       : in std_logic;
-            data_out  : out unsigned(15 downto 0)
-        );
-    end component;
-
-    -- ula component (use lowercase consistently)
-    component ula is
-        port (
-            entrada_A : in unsigned(15 downto 0);
-            entrada_B : in unsigned(15 downto 0);
-            selec_op  : in unsigned(1 downto 0);
-            resultado : out unsigned(15 downto 0);
-            flag_zero : out std_logic;
-            flag_neg  : out std_logic;
-            flag_carry : out std_logic
-        );
-    end component;
-
-    -- Accumulator component
     component accumulator is
-        port(
-            clk, rst, wr_en: in std_logic;
-            data_in: in unsigned(15 downto 0);
-            data_out: out unsigned(15 downto 0)
-        );
+        port(clk, rst, wr_en: in std_logic; data_in: in unsigned(15 downto 0); data_out: out unsigned(15 downto 0));
     end component;
 
-    -- Internal connection signals
-    signal bank_data_out : unsigned(15 downto 0);
-    signal acc_data_out  : unsigned(15 downto 0);
-    signal ula_result    : unsigned(15 downto 0);
+    component register_bank is
+        port(clk, rst, wr_en: in std_logic; reg_wr_addr, reg_rd_addr: in unsigned(2 downto 0); data_in: in unsigned(15 downto 0); data_out: out unsigned(15 downto 0));
+    end component;
+
+    component ula is
+        port(entrada_A, entrada_B: in unsigned(15 downto 0); selec_op: in unsigned(1 downto 0); resultado: out unsigned(15 downto 0); flag_zero, flag_neg, flag_carry: out std_logic);
+    end component;
+
+    -- Sinais internos de conexão
+    signal s_acc_data_out    : unsigned(15 downto 0);
+    signal s_bank_data_out   : unsigned(15 downto 0);
+    signal s_ula_result      : unsigned(15 downto 0);
+    signal s_data_for_bank_in: unsigned(15 downto 0);
 
 begin
-    -- Register bank instance
-    bank: register_bank port map(
-        data_in  => bank_data_in,
-        clk      => clk,
-        wr_en    => bank_wr_en,
-        reg_code => reg_code,
-        rst      => rst,
-        data_out => bank_data_out
-    );
-    
-    -- Accumulator instance
-    acc: accumulator port map(
-        clk      => clk,
-        rst      => rst,
-        wr_en    => acc_wr_en,
-        data_in  => ula_result,
-        data_out => acc_data_out
-    );
-    
-    -- ula instance (use lowercase to match component declaration)
-    ula_comp: ula port map(
-        entrada_A => acc_data_out,   -- Accumulator as first ula input
-        entrada_B => bank_data_out,  -- Register bank as second ula input
-        selec_op  => selec_op,
-        resultado => ula_result,
-        flag_zero => flag_zero,
-        flag_neg  => flag_neg,
-        flag_carry => flag_carry
-    );
-    
-    -- Connect ula result to module output
-    result <= ula_result;
+    -- Instanciação do Acumulador
+    acc_inst: accumulator
+        port map(
+            clk      => clk,
+            rst      => rst,
+            wr_en    => ctrl_acc_wr_en,
+            data_in  => s_ula_result,       -- ACC recebe resultado da ULA
+            data_out => s_acc_data_out
+        );
+
+    -- Instanciação do Banco de Registradores
+    bank_inst: register_bank
+        port map(
+            clk         => clk,
+            rst         => rst,
+            wr_en       => ctrl_reg_wr_en,
+            reg_wr_addr => ctrl_reg_wr_addr,
+            reg_rd_addr => ctrl_reg_rd_addr,
+            data_in     => s_data_for_bank_in, -- Entrada multiplexada
+            data_out    => s_bank_data_out
+        );
+
+    -- Instanciação da ULA
+    ula_inst: ula
+        port map(
+            entrada_A  => s_acc_data_out,    -- ULA operando A é o ACC
+            entrada_B  => s_bank_data_out,   -- ULA operando B é a saída do banco
+            selec_op   => ctrl_alu_sel,
+            resultado  => s_ula_result,
+            flag_zero  => ula_flag_zero,
+            flag_neg   => ula_flag_neg,
+            flag_carry => ula_flag_carry
+        );
+
+    -- Multiplexador para a entrada de dados do Banco de Registradores
+    s_data_for_bank_in <= s_ula_result      when ctrl_bank_in_sel = '0' else -- Para MOV Rd, Rs (resultado da ULA)
+                          immediate_data_in when ctrl_bank_in_sel = '1' else -- Para LD Rd, Imm
+                          (others => 'X'); -- Default, caso ctrl_bank_in_sel seja indefinido
+
+    -- Saídas de Debug
+    acc_data_debug   <= s_acc_data_out;
+    bank_data_debug  <= s_bank_data_out;
+    ula_result_debug <= s_ula_result;
 
 end architecture a_ula_acc_bank;

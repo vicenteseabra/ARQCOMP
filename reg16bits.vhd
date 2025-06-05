@@ -14,16 +14,16 @@ end entity;
 architecture a_reg16bits of reg16bits is
    signal registro: unsigned(15 downto 0) := (others => '0');  -- inicializa o registro com 0
 begin
-   process(clk,rst,wr_en)  -- acionado se houver mudança em clk, rst ou wr_en
+   process(clk,rst)  -- acionado se houver mudança em clk, rst ou wr_en
    begin
       if rst='1' then
-         registro <= "0000000000000000";
-      elsif wr_en='1' then
-         if rising_edge(clk) then
-            registro <= data_in;
-         end if;
+         registro <= (others => '0');
+      elsif rising_edge(clk) then
+            registro <= data_in when wr_en = '1' else
+                        registro;  -- mantém o valor atual se wr_en = '0'
       end if;
-   end process;
+end process;
 
-   data_out <= registro;  -- conexao direta, fora do processo
+   data_out <= registro;
+
 end architecture a_reg16bits;
