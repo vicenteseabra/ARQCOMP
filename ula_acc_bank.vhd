@@ -13,7 +13,6 @@ entity ula_acc_bank is
         acc_wr_en   : in  std_logic;
         ula_op     : in  unsigned(1 downto 0);
         ctrl_bank_in_sel : in  std_logic;             -- '0': ULA_result, '1': Immediate_data
-
         immediate_data_in: in  unsigned(15 downto 0); -- Dado imediato da UC (para LD)
 
         -- Saídas para UC (Flags)
@@ -58,7 +57,7 @@ begin
             clk      => clk,
             rst      => rst,
             wr_en    => acc_wr_en,
-            data_in  => s_ula_result,       -- ACC recebe resultado da ULA
+            data_in  => s_data_for_bank_in,       -- ACC recebe resultado da ULA ou dado imediato
             data_out => s_acc_data_out
         );
 

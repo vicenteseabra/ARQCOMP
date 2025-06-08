@@ -115,8 +115,11 @@ begin
 
                             when '1' => -- Load no ACC
                                 debug_acc_wr_en_out   <= '1';
+                                debug_bank_in_sel_out <= '1';
                                 debug_imm_data_out <= "000000" & imm10_field;
                                 debug_alu_sel_out     <= ALU_PASS_B;  -- ULA passa o imediato
+                                debug_reg_wr_en_out   <= '0';
+
 
                             when others => null; -- Não faz nada
 
