@@ -9,17 +9,15 @@ entity ula_acc_bank is
 
         -- Sinais de Controle da UC
         ctrl_reg_wr_en   : in  std_logic;
-        ctrl_reg_wr_addr : in  unsigned(2 downto 0);
-        ctrl_reg_rd_addr : in  unsigned(2 downto 0);
-        ctrl_acc_wr_en   : in  std_logic;
-        ctrl_alu_sel     : in  unsigned(1 downto 0);
+        ctrl_reg_addr : in  unsigned(2 downto 0);
+        acc_wr_en   : in  std_logic;
+        ula_op     : in  unsigned(1 downto 0);
         ctrl_bank_in_sel : in  std_logic;             -- '0': ULA_result, '1': Immediate_data
 
         immediate_data_in: in  unsigned(15 downto 0); -- Dado imediato da UC (para LD)
 
         -- Saídas para UC (Flags)
         ula_flag_zero    : out std_logic;
-        ula_flag_neg     : out std_logic;
         ula_flag_carry   : out std_logic;
 
         -- Saídas para Debug/Top-Level
@@ -35,11 +33,16 @@ architecture a_ula_acc_bank of ula_acc_bank is
     end component;
 
     component register_bank is
-        port(clk, rst, wr_en: in std_logic; reg_wr_addr, reg_rd_addr: in unsigned(2 downto 0); data_in: in unsigned(15 downto 0); data_out: out unsigned(15 downto 0));
+        port(
+            clk, rst, wr_en: in std_logic;
+            reg_code: in unsigned(2 downto 0);
+            data_in: in unsigned(15 downto 0);
+            data_out: out unsigned(15 downto 0)
+            );
     end component;
 
     component ula is
-        port(entrada_A, entrada_B: in unsigned(15 downto 0); selec_op: in unsigned(1 downto 0); resultado: out unsigned(15 downto 0); flag_zero, flag_neg, flag_carry: out std_logic);
+        port(entrada_A, entrada_B: in unsigned(15 downto 0); selec_op: in unsigned(1 downto 0); resultado: out unsigned(15 downto 0); flag_zero, flag_carry: out std_logic);
     end component;
 
     -- Sinais internos de conexão
@@ -54,7 +57,7 @@ begin
         port map(
             clk      => clk,
             rst      => rst,
-            wr_en    => ctrl_acc_wr_en,
+            wr_en    => acc_wr_en,
             data_in  => s_ula_result,       -- ACC recebe resultado da ULA
             data_out => s_acc_data_out
         );
@@ -65,8 +68,7 @@ begin
             clk         => clk,
             rst         => rst,
             wr_en       => ctrl_reg_wr_en,
-            reg_wr_addr => ctrl_reg_wr_addr,
-            reg_rd_addr => ctrl_reg_rd_addr,
+            reg_code    => ctrl_reg_addr,
             data_in     => s_data_for_bank_in, -- Entrada multiplexada
             data_out    => s_bank_data_out
         );
@@ -76,17 +78,16 @@ begin
         port map(
             entrada_A  => s_acc_data_out,    -- ULA operando A é o ACC
             entrada_B  => s_bank_data_out,   -- ULA operando B é a saída do banco
-            selec_op   => ctrl_alu_sel,
+            selec_op   => ula_op,
             resultado  => s_ula_result,
             flag_zero  => ula_flag_zero,
-            flag_neg   => ula_flag_neg,
             flag_carry => ula_flag_carry
         );
 
     -- Multiplexador para a entrada de dados do Banco de Registradores
     s_data_for_bank_in <= s_ula_result      when ctrl_bank_in_sel = '0' else -- Para MOV Rd, Rs (resultado da ULA)
                           immediate_data_in when ctrl_bank_in_sel = '1' else -- Para LD Rd, Imm
-                          (others => 'X'); -- Default, caso ctrl_bank_in_sel seja indefinido
+                          (others => '0'); -- Default, caso ctrl_bank_in_sel seja indefinido
 
     -- Saídas de Debug
     acc_data_debug   <= s_acc_data_out;

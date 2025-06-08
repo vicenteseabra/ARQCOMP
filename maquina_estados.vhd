@@ -18,7 +18,7 @@ begin
         if rst = '1' then
             estado_s <= "00";
         elsif rising_edge(clk) then
-            if estado_s = "10" then        -- se agora esta em 2 (Execute)
+            if estado_s = "10" then        -- se agora esta em 3 (Execute)
                 estado_s <= "00";         -- o prox vai voltar ao zero (Fetch)
             else
                 estado_s <= estado_s + 1;   -- senao avanca

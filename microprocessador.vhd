@@ -9,7 +9,7 @@ entity microprocessador is
         clk         : in  std_logic;
         rst         : in  std_logic;
 
-        -- Saídas para Debug conforme solicitado
+        -- Saídas para Debug
         debug_fsm_estado  : out unsigned(1 downto 0);
         debug_pc_addr     : out unsigned(6 downto 0);
         debug_ir_instr    : out unsigned(17 downto 0);
@@ -40,25 +40,38 @@ architecture structural of microprocessador is
 
     -- Componente: Unidade de Controle
     component unidade_controle is
-        port(clk: in std_logic; rst: in std_logic; fsm_estado_in: in unsigned(1 downto 0);
-             ir_instr_in: in unsigned(17 downto 0);
-             pc_inc_en_out: out std_logic; pc_jump_en_out: out std_logic;
-             pc_jump_addr_out: out unsigned(6 downto 0); ir_wr_en_out: out std_logic;
-             dp_reg_wr_en_out: out std_logic; dp_reg_wr_addr_out: out unsigned(2 downto 0);
-             dp_reg_rd_addr_out: out unsigned(2 downto 0); dp_acc_wr_en_out: out std_logic;
-             dp_alu_sel_out: out unsigned(1 downto 0); dp_bank_in_sel_out: out std_logic;
-             dp_imm_data_out: out unsigned(15 downto 0));
+        port(
+            clk: in std_logic;
+            rst: in std_logic;
+            fsm_estado_in: in unsigned(1 downto 0);
+            ir_instr_in: in unsigned(17 downto 0);
+            pc_inc_en_out: out std_logic;
+            pc_jump_en_out: out std_logic;
+            pc_jump_addr_out: out unsigned(6 downto 0);
+            ir_wr_en_out: out std_logic;
+            debug_reg_wr_en_out: out std_logic;
+            debug_reg_addr_out: out unsigned(2 downto 0);
+            debug_acc_wr_en_out: out std_logic;
+            debug_alu_sel_out: out unsigned(1 downto 0);
+            debug_bank_in_sel_out: out std_logic;
+            debug_imm_data_out: out unsigned(15 downto 0));
     end component;
 
     -- Componente: Datapath Core (ULA, ACC, Banco, MUX)
     component ula_acc_bank is
-        port(clk: in std_logic; rst: in std_logic; ctrl_reg_wr_en: in std_logic;
-             ctrl_reg_wr_addr: in unsigned(2 downto 0); ctrl_reg_rd_addr: in unsigned(2 downto 0);
-             ctrl_acc_wr_en: in std_logic; ctrl_alu_sel: in unsigned(1 downto 0);
-             ctrl_bank_in_sel: in std_logic; immediate_data_in: in unsigned(15 downto 0);
-             ula_flag_zero: out std_logic; ula_flag_neg: out std_logic; ula_flag_carry: out std_logic;
-             acc_data_debug: out unsigned(15 downto 0); bank_data_debug: out unsigned(15 downto 0);
-             ula_result_debug: out unsigned(15 downto 0));
+        port(   clk: in std_logic;
+                rst: in std_logic;
+                ctrl_reg_wr_en: in std_logic;
+                ctrl_reg_addr: in unsigned(2 downto 0);
+                acc_wr_en: in std_logic;
+                ula_op: in unsigned(1 downto 0);
+                ctrl_bank_in_sel: in std_logic;
+                immediate_data_in: in unsigned(15 downto 0);
+                ula_flag_zero: out std_logic;
+                ula_flag_carry: out std_logic;
+                acc_data_debug: out unsigned(15 downto 0);
+                bank_data_debug: out unsigned(15 downto 0);
+                ula_result_debug: out unsigned(15 downto 0));
     end component;
 
     -- Sinais de interconexão
@@ -72,16 +85,15 @@ architecture structural of microprocessador is
     signal s_pc_jump_addr : unsigned(6 downto 0);
     signal s_ir_wr_en     : std_logic;
 
-    signal s_dp_reg_wr_en   : std_logic;
-    signal s_dp_reg_wr_addr : unsigned(2 downto 0);
-    signal s_dp_reg_rd_addr : unsigned(2 downto 0);
-    signal s_dp_acc_wr_en   : std_logic;
-    signal s_dp_alu_sel     : unsigned(1 downto 0);
-    signal s_dp_bank_in_sel : std_logic;
-    signal s_dp_imm_data    : unsigned(15 downto 0);
+    signal s_debug_reg_wr_en   : std_logic;
+    signal s_debug_reg_addr : unsigned(2 downto 0);
+    signal s_debug_acc_wr_en   : std_logic;
+    signal s_debug_alu_sel     : unsigned(1 downto 0);
+    signal s_debug_bank_in_sel : std_logic;
+    signal s_debug_imm_data    : unsigned(15 downto 0);
 
     -- Sinais de flags (não usados ainda, mas prontos)
-    -- signal s_ula_zero, s_ula_neg, s_ula_carry : std_logic;
+    signal s_ula_zero, s_ula_carry : std_logic;
 
 begin
     -- Instanciação da Máquina de Estados
@@ -121,13 +133,12 @@ begin
             pc_jump_en_out     => s_pc_jump_en,
             pc_jump_addr_out   => s_pc_jump_addr,
             ir_wr_en_out       => s_ir_wr_en,
-            dp_reg_wr_en_out   => s_dp_reg_wr_en,
-            dp_reg_wr_addr_out => s_dp_reg_wr_addr,
-            dp_reg_rd_addr_out => s_dp_reg_rd_addr,
-            dp_acc_wr_en_out   => s_dp_acc_wr_en,
-            dp_alu_sel_out     => s_dp_alu_sel,
-            dp_bank_in_sel_out => s_dp_bank_in_sel,
-            dp_imm_data_out    => s_dp_imm_data
+            debug_reg_wr_en_out   => s_debug_reg_wr_en,
+            debug_reg_addr_out => s_debug_reg_addr,
+            debug_acc_wr_en_out   => s_debug_acc_wr_en,
+            debug_alu_sel_out     => s_debug_alu_sel,
+            debug_bank_in_sel_out => s_debug_bank_in_sel,
+            debug_imm_data_out    => s_debug_imm_data
         );
 
     -- Instanciação do Datapath Core
@@ -135,16 +146,14 @@ begin
         port map(
             clk                => clk,
             rst                => rst,
-            ctrl_reg_wr_en     => s_dp_reg_wr_en,
-            ctrl_reg_wr_addr   => s_dp_reg_wr_addr,
-            ctrl_reg_rd_addr   => s_dp_reg_rd_addr,
-            ctrl_acc_wr_en     => s_dp_acc_wr_en,
-            ctrl_alu_sel       => s_dp_alu_sel,
-            ctrl_bank_in_sel   => s_dp_bank_in_sel,
-            immediate_data_in  => s_dp_imm_data,
-            -- ula_flag_zero      => s_ula_zero, -- Conectar se for usar
-            -- ula_flag_neg       => s_ula_neg,
-            -- ula_flag_carry     => s_ula_carry,
+            ctrl_reg_wr_en     => s_debug_reg_wr_en,
+            ctrl_reg_addr   => s_debug_reg_addr,
+            acc_wr_en     => s_debug_acc_wr_en,
+            ula_op       => s_debug_alu_sel,
+            ctrl_bank_in_sel   => s_debug_bank_in_sel,
+            immediate_data_in  => s_debug_imm_data,
+            ula_flag_zero      => s_ula_zero,
+            ula_flag_carry     => s_ula_carry,
             acc_data_debug     => debug_acc_out,
             bank_data_debug    => debug_reg_bank_out,
             ula_result_debug   => debug_ula_out

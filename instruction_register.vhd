@@ -15,7 +15,7 @@ end entity instruction_register;
 architecture a_ir of instruction_register is
     signal ir_value : unsigned(17 downto 0);
 begin
-    process(clk, rst)
+    process(clk, rst,wr_en)
     begin
         if rst = '1' then
             ir_value <= (others => '0'); -- Reset para NOP (0000...)
