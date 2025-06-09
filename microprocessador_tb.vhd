@@ -37,7 +37,7 @@ architecture behavior of microprocessador_tb is
 
 begin
     -- Instanciação do DUT
-    dut_inst: microprocessador
+    micro_inst: microprocessador
         port map (
             clk                => tb_clk,
             rst                => tb_rst,

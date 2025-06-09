@@ -22,14 +22,25 @@ end entity microprocessador;
 architecture structural of microprocessador is
     -- Componente: Máquina de Estados
     component maquina_estados is
-        port(clk: in std_logic; rst: in std_logic; estado: out unsigned(1 downto 0));
+        port(
+            clk: in std_logic;
+            rst: in std_logic;
+            estado: out unsigned(1 downto 0)
+        );
     end component;
 
     -- Componente: Interface PC-ROM
     component pc_rom is
-        port(clk: in std_logic; rst: in std_logic; pc_inc_en: in std_logic;
-             jump_en_ctrl: in std_logic; addr_jump_ctrl: in unsigned(6 downto 0);
-             rom_data_out: out unsigned(17 downto 0); pc_addr_out: out unsigned(6 downto 0));
+        port(
+            clk: in std_logic;
+            rst: in std_logic;
+            pc_inc_en: in std_logic;
+            jump_en_ctrl: in std_logic;
+            addr_jump_ctrl: in unsigned(6 downto 0);
+            pc_out: out unsigned(6 downto 0);
+            rom_data_out: out unsigned(17 downto 0);
+            pc_wr_en: in std_logic  -- Sinal de escrita no PC
+            );
     end component;
 
     -- Componente: Registrador de Instrução
@@ -48,6 +59,7 @@ architecture structural of microprocessador is
             pc_inc_en_out: out std_logic;
             pc_jump_en_out: out std_logic;
             pc_jump_addr_out: out unsigned(6 downto 0);
+            pc_wr_en_out: out std_logic;
             ir_wr_en_out: out std_logic;
             debug_reg_wr_en_out: out std_logic;
             debug_reg_addr_out: out unsigned(2 downto 0);
@@ -83,6 +95,7 @@ architecture structural of microprocessador is
     signal s_pc_inc_en    : std_logic;
     signal s_pc_jump_en   : std_logic;
     signal s_pc_jump_addr : unsigned(6 downto 0);
+    signal s_pc_wr_en     : std_logic;
     signal s_ir_wr_en     : std_logic;
 
     signal s_debug_reg_wr_en   : std_logic;
@@ -98,7 +111,11 @@ architecture structural of microprocessador is
 begin
     -- Instanciação da Máquina de Estados
     maquina_estados_inst: maquina_estados
-        port map(clk => clk, rst => rst, estado => s_fsm_estado);
+        port map(
+            clk => clk,
+            rst => rst,
+            estado => s_fsm_estado
+            );
 
     -- Instanciação da Interface PC-ROM
     pc_rom_inst: pc_rom
@@ -108,8 +125,9 @@ begin
             pc_inc_en      => s_pc_inc_en,
             jump_en_ctrl   => s_pc_jump_en,
             addr_jump_ctrl => s_pc_jump_addr,
-            rom_data_out   => s_rom_data,
-            pc_addr_out    => s_pc_addr
+            pc_out         => s_pc_addr,
+            pc_wr_en       => s_pc_wr_en,  -- Sinal de escrita no PC
+            rom_data_out   => s_rom_data
         );
 
     -- Instanciação do Registrador de Instrução
@@ -130,6 +148,7 @@ begin
             fsm_estado_in      => s_fsm_estado,
             ir_instr_in        => s_ir_instr,
             pc_inc_en_out      => s_pc_inc_en,
+            pc_wr_en_out     => s_pc_wr_en,
             pc_jump_en_out     => s_pc_jump_en,
             pc_jump_addr_out   => s_pc_jump_addr,
             ir_wr_en_out       => s_ir_wr_en,

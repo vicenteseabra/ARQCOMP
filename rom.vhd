@@ -44,13 +44,13 @@ architecture a_rom of rom is
         3   => "0010" & "00" & "00000" & "0000" & "100", -- ADD_ACC R4
 
         --    3. MOV_RD_ACC R5 (R5 <= ACC)
-        --       Op=0101, Rd=R5(00101)
+        --       Op=0101, Rd=R5(101)
         4   => "0101" & '0' & "101" & "000" & "0000" & "000", -- MOV_RD_ACC R5
 
         -- D. Subtrai 1 de R5 (R5 <= R5 - 1)
 
         --    1. LD Acc, 1 (setamos Acc pra 1)
-        --       Op=0100, f=(1), Rd=R0(00000), Imm=0 (000001)
+        --       Op=0100, f=(1), Rd=R0(000), Imm=0 (000001)
         5   => "0100" & '1' & "000000" & "0000001" , -- LD Acc, 0
 
         --    2.sub_ACC_RS R5 (ACC <= R5 - ACC)
@@ -58,7 +58,7 @@ architecture a_rom of rom is
         6   => "0011" & '0' & "101" & "000" & "0000101", -- MOV_ACC_RS R5
 
         --    3. MOV_RD_ACC R5 (R5 <= ACC)
-        --       Op=0101, Rd=R5(00101)
+        --       Op=0101, Rd=R5(101)
         7   => "0101" & '0' & "101" & "000" & "0000" & "000", -- MOV_RD_ACC R5
 
         -- E. Salta para o endereço 20
@@ -84,18 +84,16 @@ architecture a_rom of rom is
         20   => "0100" & '1' & "000000" & "0000000" , -- LD Acc, 0
 
         --    2. ADD R5 (ACC <= ACC + R5)
-        --       Op=0010, Rs=R5(00101)
+        --       Op=0010, Rs=R5(101)
         21   => "0010" & "00" & "00000" & "0000" & "101", -- ADD_ACC R5
 
-        --    3. MOV_RD_ACC R5 (R5 <= ACC)
-        --       Op=0101, Rd=R5(00011)
-        22   => "0101" & '0' & "011" & "000" & "0000" & "000", -- MOV_RD_ACC R5
-
+        --    3. MOV_RD_ACC R5 (R3 <= ACC)
+        --       Op=0101, Rd=R3(011)
+        22   => "0101" & '0' & "011" & "000" & "0000" & "000", -- MOV_RD_ACC R3
 
         -- H. Salta para o passo C (endereço 2)
         --    Op=1111, Addr=2 (0000010)
         23  => "1111" & "00" & "000" & "0000010" & "00",   -- JMP 2
-
         -- I. Zera R3 (LD R3, #0) (nunca será executada)
         --    Op=0100, Rd=R3(00011), Imm=0 (0000000)
         24  => "0100" & "01" & "00011" & "0000000", -- LD R3, 0
@@ -103,10 +101,5 @@ architecture a_rom of rom is
         others => NOP_OP & "00000000000000" -- NOP para o resto
     );
 begin
-    process(clk)
-    begin
-        if rising_edge(clk) then
-            dado <= conteudo_rom(to_integer(endereco));
-        end if;
-    end process;
+    dado <= conteudo_rom(to_integer(endereco));
 end architecture a_rom;

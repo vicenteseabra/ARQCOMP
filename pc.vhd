@@ -13,7 +13,7 @@ entity pc is
 end entity pc;
 
 architecture a_pc of pc is
-    signal registro : unsigned(6 downto 0);
+    signal registro : unsigned(6 downto 0) := "0000000"; -- Inicializa o PC com 0
 begin
     process(clk, rst)
     begin

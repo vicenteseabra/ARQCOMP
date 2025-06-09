@@ -7,24 +7,15 @@ entity pc_rom is
         clk         : in  std_logic;
         rst         : in  std_logic;
         pc_inc_en   : in  std_logic;             -- Sinal da UC para incrementar PC
+        pc_wr_en: in std_logic;              -- Sinal de escrita no PC
         jump_en_ctrl: in  std_logic;             -- Sinal da UC para JMP
         addr_jump_ctrl: in  unsigned(6 downto 0);  -- Endereço de JMP da UC
-
-        rom_data_out: out unsigned(17 downto 0); -- Instrução lida da ROM
-        pc_addr_out : out unsigned(6 downto 0)   -- Endereço atual do PC (para debug/UC)
+        pc_out : out unsigned(6 downto 0);  -- Próximo valor do PC
+        rom_data_out: out unsigned(17 downto 0) -- Instrução lida da ROM
     );
 end entity pc_rom;
 
 architecture a_pc_rom of pc_rom is
-    component pc is
-        port(
-            clk      : in  std_logic;
-            rst      : in  std_logic;
-            wr_en    : in  std_logic;
-            data_in  : in  unsigned(6 downto 0);
-            data_out : out unsigned(6 downto 0)
-        );
-    end component;
 
     component pc_controller is
         port(
@@ -33,9 +24,9 @@ architecture a_pc_rom of pc_rom is
             pc_inc_en   : in  std_logic;
             jump_en     : in  std_logic;
             addr_jump   : in  unsigned(6 downto 0);
-            pc_current  : in  unsigned(6 downto 0);
-            pc_next_val : out unsigned(6 downto 0);
-            pc_write_en : out std_logic
+            pc_write_en : in std_logic;
+            pc_next_val : out unsigned(6 downto 0)
+
         );
     end component;
 
@@ -47,21 +38,10 @@ architecture a_pc_rom of pc_rom is
         );
     end component;
 
-    signal s_pc_current_val : unsigned(6 downto 0);
-    signal s_pc_next_val    : unsigned(6 downto 0);
-    signal s_pc_write_en    : std_logic;
+    signal rom_data_out_s     : unsigned(17 downto 0);-- Dados lidos da ROM
+    signal s_pc_current_addr      : unsigned(6 downto 0); -- Próximo valor do PC
 
 begin
-    -- Instancia o Program Counter (Registrador)
-    pc_reg_inst: pc
-        port map(
-            clk      => clk,
-            rst      => rst,
-            wr_en    => s_pc_write_en,
-            data_in  => s_pc_next_val,
-            data_out => s_pc_current_val
-        );
-
     -- Instancia o Controlador do PC
     pc_ctrl_inst: pc_controller
         port map(
@@ -70,20 +50,18 @@ begin
             pc_inc_en   => pc_inc_en,       -- Controlado pela UC
             jump_en     => jump_en_ctrl,    -- Controlado pela UC
             addr_jump   => addr_jump_ctrl,  -- Controlado pela UC
-            pc_current  => s_pc_current_val,
-            pc_next_val => s_pc_next_val,
-            pc_write_en => s_pc_write_en
+            pc_next_val => s_pc_current_addr,
+            pc_write_en => pc_wr_en
         );
 
     -- Instancia a ROM
     rom_inst: rom
         port map(
             clk      => clk,
-            endereco => s_pc_current_val, -- PC atualiza endereço da ROM
-            dado     => rom_data_out
+            endereco => s_pc_current_addr, -- PC atualiza endereço da ROM
+            dado     => rom_data_out_s
         );
 
-    -- Saída do endereço atual do PC
-    pc_addr_out <= s_pc_current_val;
-
+    rom_data_out <= rom_data_out_s;
+    pc_out <= s_pc_current_addr; -- Saída do PC para a UC
 end architecture a_pc_rom;

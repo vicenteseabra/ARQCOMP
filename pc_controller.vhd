@@ -8,29 +8,42 @@ entity pc_controller is
     port(
         clk         : in  std_logic;
         rst         : in  std_logic;
-        pc_inc_en   : in  std_logic;             -- Habilita o incremento do PC (geralmente no Fetch)
+        pc_inc_en   : in  std_logic;             -- Habilita o incremento do PC (no Fetch)
         jump_en     : in  std_logic;             -- Habilita o salto
         addr_jump   : in  unsigned(6 downto 0);  -- Endereço para salto absoluto
-        pc_current  : in  unsigned(6 downto 0);  -- Valor atual do PC (lido do registrador PC)
-        pc_next_val : out unsigned(6 downto 0);  -- Próximo valor a ser escrito no PC
-        pc_write_en : out std_logic              -- Sinal para habilitar a escrita no registrador PC
+        pc_write_en : in std_logic;             -- Sinal para habilitar a escrita no registrador PC
+        pc_next_val : out unsigned(6 downto 0)  -- Próximo valor a ser escrito no PC
+
     );
 end entity pc_controller;
 
 architecture a_pc_controller of pc_controller is
+    component pc is
+        port(
+            clk      : in  std_logic;
+            rst      : in  std_logic;
+            wr_en    : in  std_logic;
+            data_in  : in  unsigned(6 downto 0);
+            data_out : out unsigned(6 downto 0)
+        );
+    end component;
+
+    signal ProgramCounterOut : unsigned(6 downto 0);
+    signal ProgramCounterIn : unsigned(6 downto 0) := "0000000";
+
 begin
-    process(pc_current, pc_inc_en, jump_en, addr_jump)
-    begin
-        if jump_en = '1' then
-            pc_next_val <= addr_jump;
-        elsif pc_inc_en = '1' then
-            pc_next_val <= pc_current + 1;
-        else
-            pc_next_val <= pc_current; -- Mantém o valor se não há incremento nem salto
-        end if;
-    end process;
+    -- Instancia o Program Counter (Registrador)
+    pc_reg_inst: pc
+        port map(
+            clk      => clk,
+            rst      => rst,
+            wr_en    => pc_write_en,
+            data_in  => ProgramCounterIn,
+            data_out => ProgramCounterOut
+        );
 
-    -- O PC deve ser escrito se houver um salto ou um incremento habilitado.
-    pc_write_en <= jump_en or pc_inc_en;
+    ProgramCounterIn <= addr_jump when jump_en = '1' else
+                        ProgramCounterOut + "0000001";
 
-end architecture a_pc_controller;
+    pc_next_val <= ProgramCounterOut;
+end a_pc_controller;
