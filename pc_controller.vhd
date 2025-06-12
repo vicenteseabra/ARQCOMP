@@ -41,7 +41,8 @@ begin
             data_in  => ProgramCounterIn,
             data_out => ProgramCounterOut
         );
-
+        
+    --- MUX
     ProgramCounterIn <= addr_jump when jump_en = '1' else
                         ProgramCounterOut + "0000001";
 
