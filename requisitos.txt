@@ -14,3 +14,5 @@ Instruções OBRIGATÓRIAS a serem usadas na sua validação:
  'Saltos': 'Incondicional é absoluto e condicional é relativo',
  'Validação -- final do loop': 'Detecção do MSB setado usando OR',
  'Validação -- complicações': 'Instrução Halt ao final'}
+
+https://docs.google.com/document/d/1Ny30XCl3iMd7BMuHUxHGm92pizxnEgms0g170Zgwz6E/edit?tab=t.0#heading=h.drwliu6j8oaj

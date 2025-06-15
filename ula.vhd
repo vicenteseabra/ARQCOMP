@@ -34,7 +34,7 @@ begin
     ext_b <= '0' & entrada_B; -- Extensão de sinal para 17 bits
 
     --===== SUM OPERATION ====--
-    s_res_sum <= ext_a + ext_b; -- Soma de 17 bits
+    s_res_sum <= ext_b + ext_a ; -- Soma de 17 bits
 
      --===== SUB OPERATION ====--
     s_res_sub <= ext_b - ext_a  ; -- Subtração de 17 bits
@@ -45,17 +45,16 @@ begin
                         entrada_A when selec_op = "11"else -- Passa A (ou NOP ULA)
                         "0000000000000000";
 
-    resultado <= s_resultado_temp; -- Atribuição final do resultado
-
     --===== CARRY FLAG ====--
     s_carry_temp <= s_res_sum(16) when selec_op = "00" else -- Carry na soma
-                    s_res_sub(16) when selec_op = "01" else
-                    '0';
+                    s_res_sub(16) when selec_op = "01";
 
     -- Cálculo dos flag Zero baseado no resultado de 16 bits
-    flag_zero_temp  <= '1' when (selec_op ="00" or selec_op="01") and (s_resultado_temp = "0000000000000000");
+    flag_zero_temp  <= '1' when (selec_op ="00" or selec_op="01") and (s_resultado_temp = "0000000000000000") else
+                      '0' when (selec_op ="00" or selec_op="01") and (s_resultado_temp /= "0000000000000000");
 
     flag_zero <= flag_zero_temp;
     flag_carry <= s_carry_temp;
 
+    resultado <= s_resultado_temp; -- Atribuição final do resultado
 end architecture a_ULA;

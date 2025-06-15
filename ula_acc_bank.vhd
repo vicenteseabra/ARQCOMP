@@ -56,8 +56,9 @@ architecture a_ula_acc_bank of ula_acc_bank is
     -- Sinais internos de conexão
     signal s_acc_data_out    : unsigned(15 downto 0);
     signal s_bank_data_out   : unsigned(15 downto 0);
-    signal s_ula_result      : unsigned(15 downto 0);
+    signal s_ula_result      : unsigned(15 downto 0) := (others => '0');
     signal s_data_for_bank_in: unsigned(15 downto 0);
+    signal s_mux_bank_Imm_data : unsigned(15 downto 0);
 
 begin
     -- Instanciação do Acumulador
@@ -66,7 +67,7 @@ begin
             clk      => clk,
             rst      => rst,
             wr_en    => acc_wr_en,
-            data_in  => s_data_for_bank_in,       -- ACC recebe resultado da ULA ou dado imediato
+            data_in  => s_ula_result,       -- ACC recebe resultado da ULA ou dado imediato
             data_out => s_acc_data_out
         );
 
@@ -77,7 +78,7 @@ begin
             rst         => rst,
             wr_en       => ctrl_reg_wr_en,
             reg_code    => ctrl_reg_addr,
-            data_in     => s_data_for_bank_in, -- Entrada multiplexada
+            data_in     => s_ula_result,
             data_out    => s_bank_data_out
         );
 
@@ -85,7 +86,7 @@ begin
     ula_inst: ula
         port map(
             entrada_A  => s_acc_data_out,    -- ULA operando A é o ACC
-            entrada_B  => s_bank_data_out,   -- ULA operando B é a saída do banco
+            entrada_B  => s_mux_bank_Imm_data,   -- ULA operando B é a saída do banco ou Immediate
             selec_op   => ula_op,
             resultado  => s_ula_result,
             flag_zero  => ula_flag_zero,
@@ -93,7 +94,7 @@ begin
         );
 
     -- Multiplexador para a entrada de dados do Banco de Registradores
-    s_data_for_bank_in <= s_ula_result      when ctrl_bank_in_sel = '0' else -- Para MOV Rd, Rs (resultado da ULA)
+    s_mux_bank_Imm_data <= s_bank_data_out      when ctrl_bank_in_sel = '0' else -- Para MOV Rd, Rs (resultado da ULA)
                           immediate_data_in when ctrl_bank_in_sel = '1' else -- Para LD Rd, Imm
                           (others => '0'); -- Default, caso ctrl_bank_in_sel seja indefinido
 

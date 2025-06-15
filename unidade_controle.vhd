@@ -10,9 +10,8 @@ entity unidade_controle is
         ir_instr_in     : in  unsigned(17 downto 0); -- Instrução do IR
 
         -- Flags da ULA (para futuras instruções condicionais)
-        -- ula_zero_in     : in  std_logic;
-        -- ula_carry_in    : in  std_logic;
-        -- ula_neg_in      : in  std_logic;
+        ula_zero_in     : in  std_logic;
+        ula_carry_in    : in  std_logic;
 
         -- Sinais de controle para PC_ROM
         pc_inc_en_out   : out std_logic;
@@ -55,8 +54,11 @@ architecture a_unidade_controle of unidade_controle is
     constant SUB_ACC_OP    : unsigned(3 downto 0) := "0011"; -- ACC <= Rs - ACC
     constant LD_OP         : unsigned(3 downto 0) := "0100"; -- Rd <= Imm
     constant MOV_RD_ACC_OP : unsigned(3 downto 0) := "0101"; -- Rd <= ACC
+    constant MOV_ACC_RS_OP : unsigned(3 downto 0) := "0111"; -- ACC <= Rs
     constant CMP           : unsigned(3 downto 0) := "1000"; -- Comparação
     constant CMPI          : unsigned(3 downto 0) := "1001"; -- Comparação Imediato
+    constant BNE_OP        : unsigned(3 downto 0) := "1101"; -- BNE (Branch if Not Equal)
+    constant BCS_OP        : unsigned(3 downto 0) := "1110"; -- BCS (Branch if Carry Set)
     constant JMP_OP        : unsigned(3 downto 0) := "1111";
 
 begin
@@ -94,17 +96,14 @@ begin
 
 
             when "01" => -- DECODE
-                -- Nesta fase, podemos pré-configurar endereços de leitura se necessário,
-                -- mas a maioria da lógica de controle é ativada no EXECUTE.
                 -- Para operações que usam Rs, já podemos setar debug_reg_addr_out.
 
                 case opcode is
-                    when ADD_ACC_OP | SUB_ACC_OP =>
+                    when ADD_ACC_OP | SUB_ACC_OP | CMP | BNE_OP =>
                         debug_reg_addr_out <= rs_field;
                     when others =>
                         debug_reg_addr_out <= (others => '0'); -- Ou um registrador padrão
                 end case;
-
 
             when "10" => -- EXECUTE
                 case opcode is
@@ -117,9 +116,11 @@ begin
                             when '0' => -- Load no registrador
                                 debug_reg_wr_en_out   <= '1';
                                 debug_reg_addr_out <= rd_field; -- Destino Rd
-                                debug_bank_in_sel_out <= '1'; -- Seleciona imediato para entrada do banco
+                                debug_bank_in_sel_out <= '1';         -- Seleciona ULA_result (que é ACC)
                                 -- Estende sinal do imediato de 7 bits para 16 bits
+                                debug_alu_sel_out     <= ALU_PASS_B;  -- ULA passa o imediato
                                 debug_imm_data_out <= "000000" & imm10_field;
+                                debug_acc_wr_en_out   <= '0';
 
                             when '1' => -- Load no ACC
                                 debug_acc_wr_en_out   <= '1';
@@ -128,27 +129,65 @@ begin
                                 debug_alu_sel_out     <= ALU_PASS_B;  -- ULA passa o imediato
                                 debug_reg_wr_en_out   <= '0';
 
-
                             when others => null; -- Não faz nada
 
                         end case;
-
 
                     when ADD_ACC_OP => -- ACC <= ACC + Rs
                         debug_reg_addr_out <= rs_field;
                         debug_alu_sel_out     <= ALU_ADD;
                         debug_acc_wr_en_out   <= '1';
+                        debug_bank_in_sel_out <= '0';
 
                     when SUB_ACC_OP => -- ACC <= Rs - ACC
                         debug_reg_addr_out <= rs_field;
                         debug_alu_sel_out     <= ALU_SUB;
                         debug_acc_wr_en_out   <= '1';
+                        debug_bank_in_sel_out <= '0';
 
                     when MOV_RD_ACC_OP => -- Rd <= ACC
                         debug_alu_sel_out     <= ALU_PASS_A;  -- ULA passa ACC
-                        debug_bank_in_sel_out <= '0';         -- Seleciona ULA_result (que é ACC)
                         debug_reg_wr_en_out   <= '1';
                         debug_reg_addr_out <= rd_field;
+                        debug_bank_in_sel_out <= '1';         -- Seleciona ULA_result (que é ACC)
+
+                    when MOV_ACC_RS_OP => -- ACC <= Rs
+                        debug_reg_addr_out <= rs_field; -- Rs para ACC
+                        debug_alu_sel_out     <= ALU_PASS_B;  -- ULA passa Rs
+                        debug_acc_wr_en_out   <= '1'; -- Escreve no ACC
+                        debug_bank_in_sel_out <= '0'; -- Usa Rs do banco
+
+                    when BNE_OP =>
+                        case ula_zero_in is
+                            when '1' => -- Se Zero for 1, não salta
+                                pc_jump_en_out   <= '0';
+                                pc_jump_addr_out <= (others => '0'); -- Não salta
+                                pc_inc_en_out    <= '1'; -- Incrementa PC em BNE
+                                pc_wr_en_out     <= '1'; -- Permite escrita no PC
+                            when '0' => -- Se Zero for 0, salta
+                                pc_jump_en_out   <= '1';
+                                pc_jump_addr_out <= jmp_addr_field; -- Endereço de salto
+                                pc_inc_en_out    <= '0'; -- Não incrementa PC em BNE
+                                pc_wr_en_out     <= '1'; -- Permite escrita no PC
+                            when others => -- Se Zero for outro valor, não faz nada
+                                null;
+                        end case;
+
+                    when BCS_OP =>
+                        case ula_carry_in is
+                            when '0' => -- Se Carry for 0, salta
+                                pc_jump_en_out   <= '1';
+                                pc_jump_addr_out <= jmp_addr_field; -- Endereço de salto
+                                pc_inc_en_out    <= '0'; -- Não incrementa PC em BCS
+                                pc_wr_en_out     <= '1'; -- Permite escrita no PC
+                            when '1' => -- Se Carry for 1, não salta
+                                pc_jump_en_out   <= '0';
+                                pc_jump_addr_out <= (others => '0'); -- Não salta
+                                pc_inc_en_out    <= '1'; -- Incrementa PC em BCS
+                                pc_wr_en_out     <= '1'; -- Permite escrita no PC
+                            when others => -- Se Carry for outro valor, não faz nada
+                                null;
+                        end case;
 
                     when JMP_OP =>
                         pc_jump_en_out   <= '1';

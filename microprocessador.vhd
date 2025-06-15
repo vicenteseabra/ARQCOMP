@@ -61,6 +61,8 @@ architecture structural of microprocessador is
             pc_jump_addr_out: out unsigned(6 downto 0);
             pc_wr_en_out: out std_logic;
             ir_wr_en_out: out std_logic;
+            ula_zero_in: in std_logic;
+            ula_carry_in: in std_logic;
             debug_reg_wr_en_out: out std_logic;
             debug_reg_addr_out: out unsigned(2 downto 0);
             debug_acc_wr_en_out: out std_logic;
@@ -106,7 +108,7 @@ architecture structural of microprocessador is
     signal s_debug_bank_in_sel : std_logic;
     signal s_debug_imm_data    : unsigned(15 downto 0);
 
-    -- Sinais de flags (não usados ainda, mas prontos)
+    -- Sinais de flags
     signal s_ula_zero, s_ula_carry : std_logic;
 
 begin
@@ -153,6 +155,8 @@ begin
             pc_jump_en_out     => s_pc_jump_en,
             pc_jump_addr_out   => s_pc_jump_addr,
             ir_wr_en_out       => s_ir_wr_en,
+            ula_zero_in     => s_ula_zero,
+            ula_carry_in    => s_ula_carry,
             debug_reg_wr_en_out   => s_debug_reg_wr_en,
             debug_reg_addr_out => s_debug_reg_addr,
             debug_acc_wr_en_out   => s_debug_acc_wr_en,
@@ -167,9 +171,9 @@ begin
             clk                => clk,
             rst                => rst,
             ctrl_reg_wr_en     => s_debug_reg_wr_en,
-            ctrl_reg_addr   => s_debug_reg_addr,
-            acc_wr_en     => s_debug_acc_wr_en,
-            ula_op       => s_debug_alu_sel,
+            ctrl_reg_addr      => s_debug_reg_addr,
+            acc_wr_en          => s_debug_acc_wr_en,
+            ula_op             => s_debug_alu_sel,
             ctrl_bank_in_sel   => s_debug_bank_in_sel,
             immediate_data_in  => s_debug_imm_data,
             ula_flag_zero      => s_ula_zero,

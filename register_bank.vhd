@@ -24,8 +24,8 @@ architecture a_register_bank of register_bank is
     );
   end component;
 
-  signal data_out_0_s,data_out_1_s,data_out_2_s : unsigned(15 downto 0);
-  signal data_out_3_s,data_out_4_s,data_out_5_s : unsigned(15 downto 0);
+  signal data_out_0_s,data_out_1_s,data_out_2_s : unsigned(15 downto 0) := (others => '0');
+  signal data_out_3_s,data_out_4_s,data_out_5_s : unsigned(15 downto 0) := (others => '0');
 
   signal wr_en_0_s,wr_en_1_s,wr_en_2_s : std_logic := '0';
   signal wr_en_3_s,wr_en_4_s,wr_en_5_s : std_logic := '0';
