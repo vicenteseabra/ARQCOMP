@@ -66,7 +66,8 @@ architecture structural of microprocessador is
             debug_acc_wr_en_out: out std_logic;
             debug_alu_sel_out: out unsigned(1 downto 0);
             debug_bank_in_sel_out: out std_logic;
-            debug_imm_data_out: out unsigned(15 downto 0));
+            debug_imm_data_out: out unsigned(15 downto 0)
+            );
     end component;
 
     -- Componente: Datapath Core (ULA, ACC, Banco, MUX)

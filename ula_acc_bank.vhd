@@ -28,7 +28,11 @@ end entity ula_acc_bank;
 
 architecture a_ula_acc_bank of ula_acc_bank is
     component accumulator is
-        port(clk, rst, wr_en: in std_logic; data_in: in unsigned(15 downto 0); data_out: out unsigned(15 downto 0));
+        port(
+            clk, rst, wr_en: in std_logic;
+            data_in: in unsigned(15 downto 0);
+            data_out: out unsigned(15 downto 0)
+            );
     end component;
 
     component register_bank is
@@ -41,7 +45,12 @@ architecture a_ula_acc_bank of ula_acc_bank is
     end component;
 
     component ula is
-        port(entrada_A, entrada_B: in unsigned(15 downto 0); selec_op: in unsigned(1 downto 0); resultado: out unsigned(15 downto 0); flag_zero, flag_carry: out std_logic);
+        port(
+            entrada_A, entrada_B: in unsigned(15 downto 0);
+            selec_op: in unsigned(1 downto 0);
+            resultado: out unsigned(15 downto 0);
+            flag_zero, flag_carry: out std_logic
+            );
     end component;
 
     -- Sinais internos de conexão

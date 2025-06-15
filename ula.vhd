@@ -21,7 +21,8 @@ architecture a_ULA of ula is
     --    signal resultAnd, resultXor: unsigned(15 downto 0);
 
     -- Sinal para o flag de carry/borrow
-    signal s_carry_temp     : std_logic;
+    signal s_carry_temp     : std_logic := '0';
+    signal flag_zero_temp : std_logic := '0';
 
     -- Será do tipo unsigned, pois a lógica de carry/borrow é mais direta com unsigned.
     signal s_resultado_temp : unsigned(15 downto 0);
@@ -52,9 +53,9 @@ begin
                     '0';
 
     -- Cálculo dos flag Zero baseado no resultado de 16 bits
-    flag_zero  <= '1' when s_resultado_temp = "0000000000000000" else '0';
+    flag_zero_temp  <= '1' when (selec_op ="00" or selec_op="01") and (s_resultado_temp = "0000000000000000");
 
-
+    flag_zero <= flag_zero_temp;
     flag_carry <= s_carry_temp;
 
 end architecture a_ULA;

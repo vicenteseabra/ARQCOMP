@@ -55,6 +55,8 @@ architecture a_unidade_controle of unidade_controle is
     constant SUB_ACC_OP    : unsigned(3 downto 0) := "0011"; -- ACC <= Rs - ACC
     constant LD_OP         : unsigned(3 downto 0) := "0100"; -- Rd <= Imm
     constant MOV_RD_ACC_OP : unsigned(3 downto 0) := "0101"; -- Rd <= ACC
+    constant CMP           : unsigned(3 downto 0) := "1000"; -- Comparação
+    constant CMPI          : unsigned(3 downto 0) := "1001"; -- Comparação Imediato
     constant JMP_OP        : unsigned(3 downto 0) := "1111";
 
 begin
@@ -137,7 +139,7 @@ begin
                         debug_alu_sel_out     <= ALU_ADD;
                         debug_acc_wr_en_out   <= '1';
 
-                    when SUB_ACC_OP => -- ACC <= ACC - Rs
+                    when SUB_ACC_OP => -- ACC <= Rs - ACC
                         debug_reg_addr_out <= rs_field;
                         debug_alu_sel_out     <= ALU_SUB;
                         debug_acc_wr_en_out   <= '1';
@@ -153,6 +155,18 @@ begin
                         pc_jump_addr_out <= jmp_addr_field;
                         pc_inc_en_out    <= '0'; -- Não incrementa PC em JMP
                         pc_wr_en_out     <= '1'; -- Permite escrita no PC
+
+                    when CMP => -- Comparação Rg com Acc (pode ser usado para saltos condicionais)
+                        debug_reg_addr_out <= rs_field; -- Rs para comparação
+                        debug_alu_sel_out     <= ALU_SUB; -- ULA faz subtração
+                        debug_acc_wr_en_out   <= '0'; -- Não escreve no ACC
+                        debug_bank_in_sel_out <= '0'; -- Não usa imediato
+
+                    when CMPI =>
+                        debug_alu_sel_out     <= ALU_SUB; -- ULA faz subtração
+                        debug_acc_wr_en_out   <= '0'; -- Não escreve no ACC
+                        debug_bank_in_sel_out <= '1'; -- Usa imediato
+                        debug_imm_data_out    <= "000000" & imm10_field; -- Imediato de 10 bits
 
                     when others => -- Instruções não implementadas
                         null;
