@@ -36,7 +36,7 @@ architecture a_rom of rom is
         5=> LD_OP & B"1_000_0000000001", -- LD Acc <= 01
         6=> ADD_ACC_OP & "00000000000011", -- ADD ACC <= ACC + R3
         7=> MOV_RD_ACC_OP & "00110000000000", -- MOV R3 <= ACC
-        8=> CMPI_OP & "00000000011110", -- CMPI 30
+        8=> CMPI_OP & "00000000011110", -- CMPI Acc, 30
         9=> BCS_OP & B"01_000000001100", -- BCS 2
         10=> MOV_ACC_RS_OP & "00000000000100", -- MOV ACC <= R4
         11=> MOV_RD_ACC_OP & "01010000000001", -- MOV R5 <= ACC
