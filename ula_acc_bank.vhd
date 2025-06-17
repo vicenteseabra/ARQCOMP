@@ -14,7 +14,8 @@ entity ula_acc_bank is
         ula_op     : in  unsigned(1 downto 0);
         ctrl_bank_in_sel : in  std_logic;             -- '0': ULA_result, '1': Immediate_data
         immediate_data_in: in  unsigned(15 downto 0); -- Dado imediato da UC (para LD)
-
+        mux_ula_ram_data : in  std_logic; -- Seleção de dados para o banco de registradores (0: ULA, 1: RAM)
+        ram_data : in  unsigned(15 downto 0); -- Dado lido da RAM
         -- Saídas para UC (Flags)
         ula_flag_zero    : out std_logic;
         ula_flag_carry   : out std_logic;
@@ -59,6 +60,8 @@ architecture a_ula_acc_bank of ula_acc_bank is
     signal s_ula_result      : unsigned(15 downto 0) := (others => '0');
     signal s_data_for_bank_in: unsigned(15 downto 0);
     signal s_mux_bank_Imm_data : unsigned(15 downto 0);
+    signal s_data_in         : unsigned(15 downto 0); -- Dado de entrada para o banco de registradores
+    signal s_ram_data        : unsigned(15 downto 0); -- Dado lido da RAM
 
 begin
     -- Instanciação do Acumulador
@@ -78,7 +81,7 @@ begin
             rst         => rst,
             wr_en       => ctrl_reg_wr_en,
             reg_code    => ctrl_reg_addr,
-            data_in     => s_ula_result,
+            data_in     => s_data_in, -- Dado de entrada para o banco de registradores
             data_out    => s_bank_data_out
         );
 
@@ -93,12 +96,18 @@ begin
             flag_carry => ula_flag_carry
         );
 
-    -- Multiplexador para a entrada de dados do Banco de Registradores
+    -- Multiplexador para a entrada de dados na ULA
     s_mux_bank_Imm_data <= s_bank_data_out      when ctrl_bank_in_sel = '0' else -- Para MOV Rd, Rs (resultado da ULA)
-                          immediate_data_in when ctrl_bank_in_sel = '1' else -- Para LD Rd, Imm
-                          (others => '0'); -- Default, caso ctrl_bank_in_sel seja indefinido
+                          immediate_data_in     when ctrl_bank_in_sel = '1'; -- Para LD Rd, Imm
+
+
+    -- Multiplexador para a entrada de dados no Banco de Registradores
+    s_data_in <= s_ula_result   when mux_ula_ram_data = '0' else -- Resultado da ULA
+                 s_ram_data     when mux_ula_ram_data = '1'; -- Dado imediato
+
 
     -- Saídas de Debug
+
     acc_data_debug   <= s_acc_data_out;
     bank_data_debug  <= s_bank_data_out;
     ula_result_debug <= s_ula_result;

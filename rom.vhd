@@ -15,6 +15,8 @@ architecture a_rom of rom is
 
     -- Opcodes (simplificado para este exemplo)
     constant NOP_OP     : unsigned(3 downto 0) := "0000";
+    constant LW_OP      : unsigned(3 downto 0) := "0001"; -- Load Word
+    constant SW_OP      : unsigned(3 downto 0) := "0110"; -- Store Word (mesmo opcode do LW, mas com diferente controle na UC)
     constant ADD_ACC_OP : unsigned(3 downto 0) := "0010"; -- ACC <= ACC + Rs
     constant SUB_ACC_OP : unsigned(3 downto 0) := "0011"; -- ACC <= ACC - Rs
     constant LD_OP      : unsigned(3 downto 0) := "0100"; -- Rd <= Imm
@@ -28,18 +30,9 @@ architecture a_rom of rom is
 
     constant conteudo_rom : mem := (
 
-        0 => LD_OP & B"0_011_0000000001", -- LD R3, 00
-        1 => LD_OP & B"0_100_0000000001", -- LD R4, 00
-        2 => MOV_ACC_RS_OP & "00000000000011", --MOV ACC <= R3
-        3=> ADD_ACC_OP & "00000000000100", -- ADD ACC <= R4 + ACC
-        4=> MOV_RD_ACC_OP & "01000000000000", -- MOV R4 <= ACC
-        5=> LD_OP & B"1_000_0000000001", -- LD Acc <= 01
-        6=> ADD_ACC_OP & "00000000000011", -- ADD ACC <= ACC + R3
-        7=> MOV_RD_ACC_OP & "00110000000000", -- MOV R3 <= ACC
-        8=> CMPI_OP & "00000000011110", -- CMPI Acc, 30
-        9=> BCS_OP & B"01_000000001100", -- BCS 2
-        10=> MOV_ACC_RS_OP & "00000000000100", -- MOV ACC <= R4
-        11=> MOV_RD_ACC_OP & "01010000000001", -- MOV R5 <= ACC
+        0 => LD_OP & "10010000000011", -- LD ACC, 3
+        1 => SW_OP & "00000000000001", -- SW MEM1, ACC
+        2 => LW_OP & "00010000000001", -- LW R1, 0
         others => NOP_OP & "00000000000000" -- NOP para o resto
     );
 begin

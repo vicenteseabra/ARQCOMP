@@ -25,10 +25,15 @@ entity unidade_controle is
         -- Sinais de controle para Datapath_Core
         debug_reg_wr_en_out  : out std_logic;
         debug_reg_addr_out: out unsigned(2 downto 0);
+        mux_ula_ram_data : out std_logic; -- Seleção de dados para o banco de registradores (0: ULA, 1: RAM)
         debug_acc_wr_en_out  : out std_logic;
         debug_alu_sel_out    : out unsigned(1 downto 0);
         debug_bank_in_sel_out: out std_logic;             -- '0': ULA_result, '1': Immediate
-        debug_imm_data_out   : out unsigned(15 downto 0)  -- Dado imediato para o datapath
+        debug_imm_data_out   : out unsigned(15 downto 0);  -- Dado imediato para o datapath
+
+        -- RAM
+        ram_addr_out        : out unsigned(6 downto 0);
+        ram_wr_en_out       : out std_logic
     );
 end entity unidade_controle;
 
@@ -41,6 +46,7 @@ architecture a_unidade_controle of unidade_controle is
     signal imm10_field: unsigned(9 downto 0); -- Campo imediato de 10 bits (com sinal)
     signal jmp_addr_field: unsigned(6 downto 0); -- Campo de endereço de JMP
     signal to_acc : std_logic; -- Sinal para indicar se o imediato vai para o ACC ou registrador
+    signal mem_field : unsigned(6 downto 0); -- Campo de endereço de memória
 
     -- Constantes para ALU_SEL
     constant ALU_ADD   : unsigned(1 downto 0) := "00";
@@ -49,7 +55,9 @@ architecture a_unidade_controle of unidade_controle is
     constant ALU_PASS_A: unsigned(1 downto 0) := "11"; -- Ou NOP ULA
 
     -- Opcodes definidos na ROM
-    constant NOP_OP        : unsigned(3 downto 0) := "0000";
+    constant NOP_OP        : unsigned(3 downto 0) := "0000"; -- No Operation
+    constant LW_OP         : unsigned(3 downto 0) := "0001"; -- Load Word
+    constant SW_OP         : unsigned(3 downto 0) := "0110"; -- Store Word (mesmo opcode do LW, mas com diferente controle na UC)
     constant ADD_ACC_OP    : unsigned(3 downto 0) := "0010"; -- ACC <=  Rs + ACC
     constant SUB_ACC_OP    : unsigned(3 downto 0) := "0011"; -- ACC <= Rs - ACC
     constant LD_OP         : unsigned(3 downto 0) := "0100"; -- Rd <= Imm
@@ -59,7 +67,7 @@ architecture a_unidade_controle of unidade_controle is
     constant CMPI          : unsigned(3 downto 0) := "1001"; -- Comparação Imediato
     constant BNE_OP        : unsigned(3 downto 0) := "1101"; -- BNE (Branch if Not Equal)
     constant BCS_OP        : unsigned(3 downto 0) := "1110"; -- BCS (Branch if Carry Set)
-    constant JMP_OP        : unsigned(3 downto 0) := "1111";
+    constant JMP_OP        : unsigned(3 downto 0) := "1111"; -- JMP
 
 begin
     -- Decodificadores de campos da instrução
@@ -69,9 +77,10 @@ begin
     imm10_field <= ir_instr_in(9 downto 0); -- Para LD (10 bits)
     jmp_addr_field <= ir_instr_in(8 downto 2); -- Para JMP
     to_acc <= ir_instr_in(13); -- Para Load no ACC
+    mem_field <= ir_instr_in(6 downto 0); -- Para Load Word (LW)
 
     -- Lógica de Controle Principal
-    process(fsm_estado_in, opcode, rd_field, rs_field, imm10_field, jmp_addr_field,rst)
+    process(fsm_estado_in, opcode, rd_field, rs_field, imm10_field, jmp_addr_field,rst,mem_field)
     begin
         -- Valores padrão (desliga a maioria dos controles)
         pc_inc_en_out    <= '0';
@@ -79,7 +88,8 @@ begin
         pc_jump_addr_out <= (others => '0');
         ir_wr_en_out     <= '0';
         pc_wr_en_out     <= '0'; -- Sinal de escrita no PC
-
+        ram_wr_en_out    <= '0'; -- Desliga escrita na RAM
+        ram_addr_out     <= (others => '0'); -- Endereço da RAM
         debug_reg_wr_en_out   <= '0';
         debug_reg_addr_out <= (others => '0');
         debug_acc_wr_en_out   <= '0';
@@ -115,8 +125,9 @@ begin
                         case to_acc is
                             when '0' => -- Load no registrador
                                 debug_reg_wr_en_out   <= '1';
+                                mux_ula_ram_data <= '0'; -- Seleciona ULA_result
                                 debug_reg_addr_out <= rd_field; -- Destino Rd
-                                debug_bank_in_sel_out <= '1';         -- Seleciona ULA_result (que é ACC)
+                                debug_bank_in_sel_out <= '1';
                                 -- Estende sinal do imediato de 7 bits para 16 bits
                                 debug_alu_sel_out     <= ALU_PASS_B;  -- ULA passa o imediato
                                 debug_imm_data_out <= "000000" & imm10_field;
@@ -128,10 +139,20 @@ begin
                                 debug_imm_data_out <= "000000" & imm10_field;
                                 debug_alu_sel_out     <= ALU_PASS_B;  -- ULA passa o imediato
                                 debug_reg_wr_en_out   <= '0';
+                                mux_ula_ram_data <= '0';
 
                             when others => null; -- Não faz nada
-
                         end case;
+                    when LW_OP => -- Load Word (Rd <= Mem[mem_field])
+                    mux_ula_ram_data    <= '1'; -- Seleciona a saída da RAM
+                    ram_addr_out        <= mem_field; -- **Define o endereço da RAM para leitura**
+                    debug_reg_wr_en_out <= '1'; -- Habilita escrita no registrador de destino
+                    debug_reg_addr_out  <= rd_field; -- Endereça o registrador de destino
+
+                    when SW_OP =>
+                        ram_wr_en_out <= '1'; -- Habilita escrita na RAM
+                        ram_addr_out <= mem_field; -- Endereço da RAM
+
 
                     when ADD_ACC_OP => -- ACC <= ACC + Rs
                         debug_reg_addr_out <= rs_field;
@@ -150,10 +171,12 @@ begin
                         debug_reg_wr_en_out   <= '1';
                         debug_reg_addr_out <= rd_field;
                         debug_bank_in_sel_out <= '1';         -- Seleciona ULA_result (que é ACC)
+                        mux_ula_ram_data <= '0';
 
                     when MOV_ACC_RS_OP => -- ACC <= Rs
                         debug_reg_addr_out <= rs_field; -- Rs para ACC
                         debug_alu_sel_out     <= ALU_PASS_B;  -- ULA passa Rs
+                        mux_ula_ram_data <= '0';
                         debug_acc_wr_en_out   <= '1'; -- Escreve no ACC
                         debug_bank_in_sel_out <= '0'; -- Usa Rs do banco
 
