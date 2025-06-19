@@ -61,7 +61,6 @@ architecture a_ula_acc_bank of ula_acc_bank is
     signal s_data_for_bank_in: unsigned(15 downto 0);
     signal s_mux_bank_Imm_data : unsigned(15 downto 0);
     signal s_data_in         : unsigned(15 downto 0); -- Dado de entrada para o banco de registradores
-    signal s_ram_data        : unsigned(15 downto 0); -- Dado lido da RAM
 
 begin
     -- Instanciação do Acumulador
@@ -103,7 +102,7 @@ begin
 
     -- Multiplexador para a entrada de dados no Banco de Registradores
     s_data_in <= s_ula_result   when mux_ula_ram_data = '0' else -- Resultado da ULA
-                 s_ram_data     when mux_ula_ram_data = '1'; -- Dado imediato
+                 ram_data     when mux_ula_ram_data = '1'; -- Dado imediato
 
 
     -- Saídas de Debug
