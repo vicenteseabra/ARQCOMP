@@ -30,6 +30,8 @@ architecture a_rom of rom is
 
     constant conteudo_rom : mem := (
 
+
+    
         0 => LD_OP & "10010000000011", -- LD ACC, 3
         1 => SW_OP & "00000000000001", -- SW MEM1, ACC
         2 => LW_OP & "00010000000001", -- LW R1, 0
