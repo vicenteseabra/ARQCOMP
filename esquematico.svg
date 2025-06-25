@@ -1,0 +1,238 @@
+<svg viewBox="0 0 1400 1000" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo branco -->
+  <rect x="0" y="0" width="1400" height="1000" fill="white"/>
+
+  <!-- Definições de estilos -->
+  <defs>
+    <style>
+      .component { fill: #f0f0f0; stroke: #333; stroke-width: 2; }
+      .fsm { fill: #ffe6e6; }
+      .control { fill: #e6f3ff; }
+      .datapath { fill: #e6ffe6; }
+      .memory { fill: #fff0e6; }
+      .text { font-family: Arial, sans-serif; font-size: 12px; text-anchor: middle; }
+      .signal { stroke: #666; stroke-width: 1.5; fill: none; }
+      .bus { stroke: #333; stroke-width: 3; fill: none; }
+      .arrow { fill: #666; }
+    </style>
+    <!-- Definição de seta -->
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" class="arrow"/>
+    </marker>
+  </defs>
+
+  <!-- Título -->
+  <text x="700" y="30" style="font-size: 20px; font-weight: bold; text-anchor: middle;">Arquitetura do Microprocessador</text>
+
+  <!-- FSM (Máquina de Estados) -->
+  <rect x="50" y="100" width="120" height="80" class="component fsm" rx="5"/>
+  <text x="110" y="130" class="text">Máquina de</text>
+  <text x="110" y="145" class="text">Estados</text>
+  <text x="110" y="165" class="text" style="font-size: 10px;">[2 bits]</text>
+
+  <!-- PC Controller -->
+  <rect x="250" y="100" width="120" height="80" class="component memory" rx="5"/>
+  <text x="310" y="130" class="text">PC Controller</text>
+  <text x="310" y="150" class="text" style="font-size: 10px;">PC: 7 bits</text>
+
+  <!-- ROM -->
+  <rect x="450" y="100" width="100" height="80" class="component memory" rx="5"/>
+  <text x="500" y="135" class="text">ROM</text>
+  <text x="500" y="155" class="text" style="font-size: 10px;">128x18 bits</text>
+
+  <!-- Instruction Register -->
+  <rect x="630" y="100" width="120" height="80" class="component memory" rx="5"/>
+  <text x="690" y="130" class="text">Instruction</text>
+  <text x="690" y="145" class="text">Register (IR)</text>
+  <text x="690" y="165" class="text" style="font-size: 10px;">[18 bits]</text>
+
+  <!-- Unidade de Controle -->
+  <rect x="350" y="300" width="200" height="120" class="component control" rx="5"/>
+  <text x="450" y="330" class="text" style="font-weight: bold;">Unidade de Controle</text>
+  <text x="450" y="350" class="text" style="font-size: 10px;">Decodifica instruções</text>
+  <text x="450" y="365" class="text" style="font-size: 10px;">Gera sinais de controle</text>
+
+  <!-- Datapath Core -->
+  <!-- Banco de Registradores -->
+  <rect x="100" y="550" width="150" height="100" class="component datapath" rx="5"/>
+  <text x="175" y="575" class="text">Banco de</text>
+  <text x="175" y="590" class="text">Registradores</text>
+  <text x="175" y="610" class="text" style="font-size: 10px;">6 x 16 bits</text>
+  <text x="175" y="630" class="text" style="font-size: 10px;">(R0-R5)</text>
+
+  <!-- Acumulador -->
+  <rect x="350" y="550" width="120" height="100" class="component datapath" rx="5"/>
+  <text x="410" y="585" class="text">Acumulador</text>
+  <text x="410" y="605" class="text">(ACC)</text>
+  <text x="410" y="625" class="text" style="font-size: 10px;">[16 bits]</text>
+
+  <!-- ULA -->
+  <rect x="550" y="550" width="120" height="100" class="component datapath" rx="5"/>
+  <text x="610" y="580" class="text">ULA</text>
+  <text x="610" y="600" class="text" style="font-size: 10px;">ADD, SUB</text>
+  <text x="610" y="615" class="text" style="font-size: 10px;">PASS A/B</text>
+  <text x="610" y="635" class="text" style="font-size: 10px;">Flags: Z, C</text>
+
+  <!-- MUX Imediato/Banco -->
+  <polygon points="280,580 320,560 320,620 280,600" class="component datapath"/>
+  <text x="300" y="593" class="text" style="font-size: 10px;">MUX</text>
+
+  <!-- RAM -->
+  <rect x="750" y="550" width="120" height="100" class="component memory" rx="5"/>
+  <text x="810" y="585" class="text">RAM</text>
+  <text x="810" y="605" class="text" style="font-size: 10px;">128 x 16 bits</text>
+
+  <!-- MUX ULA/RAM -->
+  <polygon points="100,720 140,700 140,760 100,740" class="component datapath"/>
+  <text x="120" y="733" class="text" style="font-size: 10px;">MUX</text>
+  <text x="120" y="748" class="text" style="font-size: 10px;">ULA/RAM</text>
+
+  <!-- Conexões principais -->
+
+  <!-- FSM para UC -->
+  <path d="M110,180 L110,240 L450,240 L450,300" class="signal" marker-end="url(#arrow)"/>
+  <text x="130" y="235" class="text" style="font-size: 10px;">estado[1:0]</text>
+
+  <!-- PC Controller para ROM -->
+  <line x1="370" y1="140" x2="450" y2="140" class="bus" marker-end="url(#arrow)"/>
+  <text x="410" y="135" class="text" style="font-size: 10px;">addr[6:0]</text>
+
+  <!-- ROM para IR -->
+  <line x1="550" y1="140" x2="630" y2="140" class="bus" marker-end="url(#arrow)"/>
+  <text x="590" y="135" class="text" style="font-size: 10px;">instr[17:0]</text>
+
+  <!-- IR para UC -->
+  <path d="M690,180 L690,260 L500,260 L500,300" class="bus" marker-end="url(#arrow)"/>
+  <text x="710" y="220" class="text" style="font-size: 10px;">instr[17:0]</text>
+
+  <!-- UC para PC (controle) -->
+  <path d="M350,340 L280,340 L280,180" class="signal" marker-end="url(#arrow)"/>
+  <text x="220" y="260" class="text" style="font-size: 10px; text-anchor: end;">pc_inc</text>
+  <text x="220" y="275" class="text" style="font-size: 10px; text-anchor: end;">jump_en</text>
+  <text x="220" y="290" class="text" style="font-size: 10px; text-anchor: end;">jump_addr</text>
+
+  <!-- UC para IR -->
+  <path d="M520,300 L520,220 L660,220 L660,180" class="signal" marker-end="url(#arrow)"/>
+  <text x="540" y="215" class="text" style="font-size: 10px;">ir_wr_en</text>
+
+  <!-- UC para Datapath -->
+  <path d="M450,420 L450,480" class="bus" stroke-dasharray="5,5"/>
+  <text x="460" y="450" class="text" style="font-size: 10px;">Sinais de controle</text>
+
+  <!-- Banco para ULA (via MUX) -->
+  <line x1="250" y1="590" x2="280" y2="590" class="bus" marker-end="url(#arrow)"/>
+  <line x1="320" y1="590" x2="550" y2="590" class="bus" marker-end="url(#arrow)"/>
+  <text x="330" y="585" class="text" style="font-size: 10px;">B</text>
+
+  <!-- ACC para ULA -->
+  <line x1="470" y1="600" x2="550" y2="600" class="bus" marker-end="url(#arrow)"/>
+  <text x="510" y="595" class="text" style="font-size: 10px;">A</text>
+
+  <!-- ULA para ACC -->
+  <path d="M610,650 L610,680 L410,680 L410,650" class="bus" marker-end="url(#arrow)"/>
+  <text x="510" y="695" class="text" style="font-size: 10px;">resultado</text>
+
+  <!-- Banco para RAM (endereço) -->
+  <path d="M175,650 L175,780 L810,780 L810,650" class="signal" marker-end="url(#arrow)"/>
+  <text x="500" y="795" class="text" style="font-size: 10px;">addr[6:0]</text>
+
+  <!-- ACC para RAM (dados) -->
+  <path d="M430,650 L430,750 L780,750 L780,650" class="bus" marker-end="url(#arrow)"/>
+  <text x="600" y="745" class="text" style="font-size: 10px;">data_in</text>
+
+  <!-- RAM para MUX -->
+  <path d="M750,600 L700,600 L700,730 L140,730" class="bus" marker-end="url(#arrow)"/>
+  <text x="420" y="725" class="text" style="font-size: 10px;">ram_data</text>
+
+  <!-- MUX ULA/RAM para Banco -->
+  <path d="M100,730 L60,730 L60,600 L100,600" class="bus" marker-end="url(#arrow)"/>
+  <text x="40" y="665" class="text" style="font-size: 10px; writing-mode: tb;">data_in</text>
+
+  <!-- ULA para MUX -->
+  <path d="M610,650 L610,710 L140,710" class="bus" stroke-dasharray="3,3"/>
+
+  <!-- ULA flags para UC -->
+  <path d="M670,600 L720,600 L720,360 L550,360" class="signal" marker-end="url(#arrow)" stroke-dasharray="5,5"/>
+  <text x="730" y="480" class="text" style="font-size: 10px;">Z, C flags</text>
+
+  <!-- Imediato da UC -->
+  <path d="M350,380 L300,380 L300,560" class="bus" marker-end="url(#arrow)" stroke-dasharray="5,5"/>
+  <text x="280" y="470" class="text" style="font-size: 10px; text-anchor: end;">imm[15:0]</text>
+
+  <!-- Sinais de controle específicos -->
+  <!-- UC para Banco -->
+  <path d="M400,420 L400,500 L175,500 L175,550" class="signal" stroke-dasharray="3,3"/>
+  <text x="180" y="525" class="text" style="font-size: 9px;">reg_wr_en</text>
+
+  <!-- UC para ACC -->
+  <path d="M420,420 L420,520 L410,520 L410,550" class="signal" stroke-dasharray="3,3"/>
+  <text x="425" y="535" class="text" style="font-size: 9px;">acc_wr_en</text>
+
+  <!-- UC para ULA -->
+  <path d="M480,420 L480,520 L610,520 L610,550" class="signal" stroke-dasharray="3,3"/>
+  <text x="545" y="535" class="text" style="font-size: 9px;">ula_op</text>
+
+  <!-- UC para RAM -->
+  <path d="M500,420 L500,460 L820,460 L820,550" class="signal" stroke-dasharray="3,3"/>
+  <text x="660" y="455" class="text" style="font-size: 9px;">ram_wr_en</text>
+
+  <!-- UC para MUX seleção -->
+  <path d="M380,420 L380,440 L30,440 L30,730 L100,730" class="signal" stroke-dasharray="3,3"/>
+  <text x="40" y="585" class="text" style="font-size: 9px; writing-mode: tb;">mux_sel</text>
+
+  <!-- Legenda -->
+  <g transform="translate(950, 100)">
+    <text x="0" y="0" style="font-weight: bold; text-anchor: start;">Legenda:</text>
+    <rect x="0" y="10" width="40" height="20" class="component fsm"/>
+    <text x="50" y="25" class="text" style="text-anchor: start;">Controle de Estado</text>
+
+    <rect x="0" y="40" width="40" height="20" class="component control"/>
+    <text x="50" y="55" class="text" style="text-anchor: start;">Unidade de Controle</text>
+
+    <rect x="0" y="70" width="40" height="20" class="component datapath"/>
+    <text x="50" y="85" class="text" style="text-anchor: start;">Datapath</text>
+
+    <rect x="0" y="100" width="40" height="20" class="component memory"/>
+    <text x="50" y="115" class="text" style="text-anchor: start;">Memória</text>
+
+    <line x1="0" y1="140" x2="40" y2="140" class="bus"/>
+    <text x="50" y="145" class="text" style="text-anchor: start;">Barramento de dados</text>
+
+    <line x1="0" y1="160" x2="40" y2="160" class="signal"/>
+    <text x="50" y="165" class="text" style="text-anchor: start;">Sinal de controle</text>
+
+    <line x1="0" y1="180" x2="40" y2="180" class="signal" stroke-dasharray="5,5"/>
+    <text x="50" y="185" class="text" style="text-anchor: start;">Sinal de feedback</text>
+  </g>
+
+  <!-- Informações das instruções -->
+  <g transform="translate(950, 320)">
+    <text x="0" y="0" style="font-weight: bold; text-anchor: start;">Instruções:</text>
+    <text x="0" y="20" class="text" style="text-anchor: start; font-size: 10px;">• NOP</text>
+    <text x="0" y="35" class="text" style="text-anchor: start; font-size: 10px;">• LD Rd,Imm / LD ACC,Imm</text>
+    <text x="0" y="50" class="text" style="text-anchor: start; font-size: 10px;">• LW Rd,(Rs)</text>
+    <text x="0" y="65" class="text" style="text-anchor: start; font-size: 10px;">• SW (Rs),ACC</text>
+    <text x="0" y="80" class="text" style="text-anchor: start; font-size: 10px;">• ADD ACC,Rs</text>
+    <text x="0" y="95" class="text" style="text-anchor: start; font-size: 10px;">• SUB ACC,Rs</text>
+    <text x="0" y="110" class="text" style="text-anchor: start; font-size: 10px;">• MOV Rd,ACC / MOV ACC,Rs</text>
+    <text x="0" y="125" class="text" style="text-anchor: start; font-size: 10px;">• JMP addr</text>
+    <text x="0" y="140" class="text" style="text-anchor: start; font-size: 10px;">• BNE / BCS</text>
+    <text x="0" y="155" class="text" style="text-anchor: start; font-size: 10px;">• CMP / CMPI</text>
+  </g>
+
+  <!-- Ciclo de execução -->
+  <g transform="translate(950, 520)">
+    <text x="0" y="0" style="font-weight: bold; text-anchor: start;">Ciclo:</text>
+    <rect x="0" y="10" width="50" height="25" class="component" rx="5"/>
+    <text x="25" y="27" class="text" style="font-size: 10px;">FETCH</text>
+    <line x1="50" y1="22" x2="65" y2="22" class="signal" marker-end="url(#arrow)"/>
+
+    <rect x="65" y="10" width="55" height="25" class="component" rx="5"/>
+    <text x="92" y="27" class="text" style="font-size: 10px;">DECODE</text>
+    <line x1="120" y1="22" x2="135" y2="22" class="signal" marker-end="url(#arrow)"/>
+
+    <rect x="135" y="10" width="60" height="25" class="component" rx="5"/>
+    <text x="165" y="27" class="text" style="font-size: 10px;">EXECUTE</text>
+    <path d="M195,22 L210,22 L210,50 L-10,50 L-10,22 L0,22" class="signal" marker-end="url(#arrow)"/>
+  </g>
+</svg>

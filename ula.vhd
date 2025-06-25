@@ -37,7 +37,7 @@ begin
     s_res_sum <= ext_b + ext_a ; -- Soma de 17 bits
 
      --===== SUB OPERATION ====--
-    s_res_sub <= ext_b - ext_a  ; -- Subtração de 17 bits
+    s_res_sub <= ext_a - ext_b  ; -- Subtração de 17 bits
 
     s_resultado_temp <= s_res_sum(15 downto 0) when selec_op = "00" else  -- ADD
                         s_res_sub(15 downto 0) when selec_op = "01" else  -- SUB
