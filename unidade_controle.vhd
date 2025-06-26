@@ -106,8 +106,7 @@ begin
 
             when "01" => -- DECODE
                 -- Para operações que usam Rs, já podemos setar debug_reg_addr_out.
-
-                case opcode is
+                 case opcode is
                     when LW_OP | SW_OP | ADD_ACC_OP | SUB_ACC_OP | MOV_ACC_RS_OP | CMP | BNE_OP =>
                         debug_reg_read_addr_out <= rs_field;
                     when others =>
@@ -183,9 +182,8 @@ begin
                         case ula_zero_in is
                             when '1' => -- Se Zero for 1, não salta
                                 pc_jump_en_out   <= '0';
-                                pc_jump_addr_out <= (others => '0'); -- Não salta
-                                pc_inc_en_out    <= '1'; -- Incrementa PC em BNE
-                                pc_wr_en_out     <= '1'; -- Permite escrita no PC
+                                pc_inc_en_out    <= '0'; -- Incrementa PC em BNE
+                                pc_wr_en_out     <= '0'; -- Permite escrita no PC
                             when '0' => -- Se Zero for 0, salta
                                 pc_jump_en_out   <= '1';
                                 pc_jump_addr_out <= jmp_addr_field; -- Endereço de salto
@@ -205,8 +203,8 @@ begin
                             when '1' => -- Se Carry for 1, não salta
                                 pc_jump_en_out   <= '0';
                                 pc_jump_addr_out <= (others => '0'); -- Não salta
-                                pc_inc_en_out    <= '1'; -- Incrementa PC em BCS
-                                pc_wr_en_out     <= '1'; -- Permite escrita no PC
+                                pc_inc_en_out    <= '0'; -- Incrementa PC em BCS
+                                pc_wr_en_out     <= '0'; -- Permite escrita no PC
                             when others => -- Se Carry for outro valor, não faz nada
                                 null;
                         end case;

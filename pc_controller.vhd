@@ -41,10 +41,11 @@ begin
             data_in  => ProgramCounterIn,
             data_out => ProgramCounterOut
         );
-        
+
     --- MUX
     ProgramCounterIn <= addr_jump when jump_en = '1' else
-                        ProgramCounterOut + "0000001";
+                        ProgramCounterOut + "0000001" when pc_inc_en = '1' else
+                        ProgramCounterOut;
 
     pc_next_val <= ProgramCounterOut;
 end a_pc_controller;
