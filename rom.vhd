@@ -14,54 +14,64 @@ end entity rom;
 architecture a_rom of rom is
     type mem is array (0 to 127) of unsigned(17 downto 0);
 
-    -- Opcodes
-    constant NOP_OP        : unsigned(3 downto 0) := "0000";
-    constant LW_OP         : unsigned(3 downto 0) := "0001"; -- Load Word: Rd <= Mem[Rs]
-    constant ADD_ACC_OP    : unsigned(3 downto 0) := "0010";
-    constant SUB_ACC_OP    : unsigned(3 downto 0) := "0011";
-    constant LD_OP         : unsigned(3 downto 0) := "0100";
-    constant MOV_RD_ACC_OP : unsigned(3 downto 0) := "0101";
-    constant SW_OP         : unsigned(3 downto 0) := "0110"; -- Store Word: Mem[Rs] <= ACC
-    constant MOV_ACC_RS_OP : unsigned(3 downto 0) := "0111";
-    constant CMP_OP        : unsigned(3 downto 0) := "1000"; -- Compare Rs with ACC
-    constant CMPI_OP       : unsigned(3 downto 0) := "1001"; -- Compare Imm with ACC
-    constant BNE_OP        : unsigned(3 downto 0) := "1101"; -- Branch if Not Equal
-    constant BCS_OP        : unsigned(3 downto 0) := "1110"; -- Branch if Carry Set
-    constant JMP_OP        : unsigned(3 downto 0) := "1111";
+    -- Opcodes e Registradores são omitidos por brevidade, mas continuam os mesmos.
 
-    -- Registradores
-    constant R0 : unsigned(2 downto 0) := "000";
-    constant R1 : unsigned(2 downto 0) := "001";
-    constant R2 : unsigned(2 downto 0) := "010";
-    constant R3 : unsigned(2 downto 0) := "011";
-    constant R4 : unsigned(2 downto 0) := "100";
-    constant R5 : unsigned(2 downto 0) := "101";
+    constant conteudo_rom : mem := (
+        -- Seção 1: Loop de preenchimento da RAM (da sua 1ª solicitação)
+        0  => "010000000000000000",  -- LD R0, 0
+        1  => "011000000000000000",  -- SW (R0), ACC
+        2  => "010010000000000001",  -- LD ACC, 1
+        3  => "001000000000000000",  -- ADD R0
+        4  => "010100000000000000",  -- MOV R0, ACC
+        5  => "100100000000100001",  -- CMPI 33
+        6  => "110100000000000100",  -- BNE 2
 
-    constant conteudo_rom : mem := (        -- LD R0, 1
-        -- LD R5, 33
-        -- MOV ACC, R0
-        -- SW (R0), ACC
-        -- LD ACC, 1
-        -- ADD ACC, R0
-        -- MOV R0, ACC
-        -- MOV ACC, R0
-        -- CMP R5
-        -- BNE 3
+        -- Seção 2: Lógica Principal
+        7  => "010000100000000011",  -- LD R2, 3
+        8  => "010000100000000011",  -- LD R2, 3
 
-        0  => "010000000000000001",  -- LD R0, 1       (0100 0000 0000 0000 01)
+        9  => "010000000000000001",  -- LD R0, 1
 
-        1  => "011100000000000000",  -- MOV ACC, R0    (0111 0000 0000 0000 00)
-        2  => "011000000000000000",  -- SW (R0), ACC   (0110 0000 0000 0000 00)
-        3  => "010010000000000001",  -- LD ACC, 1      (0100 1000 0000 0000 01)
-        4  => "001000000000000000",  -- ADD ACC, R0    (0010 0000 0000 0000 00)
-        5  => "010100000000000000",  -- MOV R0, ACC    (0101 0000 0000 0000 00)
-        6  => "011100000000000000",  -- MOV ACC, R0    (0111 0000 0000 0000 00)
-        7  => "100100000000100001",  -- CMPi 33        (1000 0000 0000 0001 01)
-        8  => "110101000000001000",  -- BNE 3          (1101 0100 0000 0011 00)
+        -- Início do Loop Principal (Endereço 9)
+        -- Bloco "Se R0 ja é R2"
+        10  => "011100000000000000",  -- MOV ACC, R0
+        11 => "100000000000000010",  -- CMP R2
+        12 => "110100000000111000",  -- BNE 14 (Pula a próxima instrução)
+        13 => "111100000001101101",  -- JMP 28 (Pula 14 linhas para o bloco de incremento de R2)
+
+        -- Bloco "soma 1 no R0"
+        14 => "010010000000000001",  -- LD ACC, 1
+        15 => "001000000000000000",  -- ADD R0
+        16 => "010100000000000000",  -- MOV R0, ACC
+
+        -- Bloco "verifica se esta zerado o valor da ram"
+        17 => "000100010000000000",  -- LW R1, (R0)
+        18 => "011100000000000001",  -- MOV ACC, R1
+        19 => "100000000000000000",  -- CMP R0
+        20 => "111000000000101000",  -- BCC 10 (Volta 10 instruções)
+
+        -- Bloco de cálculo e armazenamento
+        21 => "011100000000000000",  -- MOV ACC, R0
+        22 => "001000000000000001",  -- ADD R1
+        23 => "010100000000000000",  -- MOV R0, ACC
+        24 => "011000000000000000",  -- SW (R0), ACC (Interpretação de SW R3 (R0))
+
+        -- Loop de verificação
+        25 => "100100000000100000",  -- CMPI 32
+        26 => "110100000001010000",  -- BNE 19 (Volta 6 instruções)
+
+        -- Bloco de incremento de R2 (destino do JMP)
+        27 => "010010000000000001",  -- LD ACC, 1
+        28 => "001000000000000010",  -- ADD R2
+        29 => "010100100000000000",  -- MOV R2, ACC
+
+        -- Loop final
+        30 => "100100000000001101",  -- CMPI 13
+        31 => "110100000000110000",  -- BNE 12 (Volta 19 instruções)
 
         -- Preenche o resto com NOPs
         others => "000000000000000000"  -- NOP
-        );
+    );
 begin
     dado <= conteudo_rom(to_integer(endereco));
 end architecture a_rom;

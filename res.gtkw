@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
-[*] Wed Jun 25 06:13:26 2025
+[*] Thu Jun 26 00:02:59 2025
 [*]
-[dumpfile] "/mnt/c/Users/thiag/OneDrive/Documentos/Ut/ArqComp/Projeto/ARQCOMP/wave/microprocessador_tb.ghw"
-[dumpfile_mtime] "Wed Jun 25 06:11:39 2025"
-[dumpfile_size] 115177
-[savefile] "/mnt/c/Users/thiag/OneDrive/Documentos/Ut/ArqComp/Projeto/ARQCOMP/res.gtkw"
-[timestart] 10738000000
-[size] 1920 1009
+[dumpfile] "/home/taronky/Documentos/AqrComp/Projeto2/ARQCOMP/wave/microprocessador_tb.ghw"
+[dumpfile_mtime] "Thu Jun 26 00:02:22 2025"
+[dumpfile_size] 146632
+[savefile] "/home/taronky/Documentos/AqrComp/Projeto2/ARQCOMP/res.gtkw"
+[timestart] 5742900000
+[size] 1920 1008
 [pos] -1 -1
-*-25.040335 11155000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-25.040335 5845000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.microprocessador_tb.
 [treeopen] top.microprocessador_tb.micro_inst.
@@ -18,14 +18,14 @@
 [sst_width] 338
 [signals_width] 377
 [sst_expanded] 1
-[sst_vpaned_height] 627
+[sst_vpaned_height] 594
 @28
 top.microprocessador_tb.tb_rst
 top.microprocessador_tb.tb_clk
 #{top.microprocessador_tb.tb_debug_fsm_estado[1:0]} top.microprocessador_tb.tb_debug_fsm_estado[1] top.microprocessador_tb.tb_debug_fsm_estado[0]
 @24
 #{top.microprocessador_tb.tb_debug_pc_addr[6:0]} top.microprocessador_tb.tb_debug_pc_addr[6] top.microprocessador_tb.tb_debug_pc_addr[5] top.microprocessador_tb.tb_debug_pc_addr[4] top.microprocessador_tb.tb_debug_pc_addr[3] top.microprocessador_tb.tb_debug_pc_addr[2] top.microprocessador_tb.tb_debug_pc_addr[1] top.microprocessador_tb.tb_debug_pc_addr[0]
-@c00028
+@c00029
 #{top.microprocessador_tb.tb_debug_ir_instr[17:0]} top.microprocessador_tb.tb_debug_ir_instr[17] top.microprocessador_tb.tb_debug_ir_instr[16] top.microprocessador_tb.tb_debug_ir_instr[15] top.microprocessador_tb.tb_debug_ir_instr[14] top.microprocessador_tb.tb_debug_ir_instr[13] top.microprocessador_tb.tb_debug_ir_instr[12] top.microprocessador_tb.tb_debug_ir_instr[11] top.microprocessador_tb.tb_debug_ir_instr[10] top.microprocessador_tb.tb_debug_ir_instr[9] top.microprocessador_tb.tb_debug_ir_instr[8] top.microprocessador_tb.tb_debug_ir_instr[7] top.microprocessador_tb.tb_debug_ir_instr[6] top.microprocessador_tb.tb_debug_ir_instr[5] top.microprocessador_tb.tb_debug_ir_instr[4] top.microprocessador_tb.tb_debug_ir_instr[3] top.microprocessador_tb.tb_debug_ir_instr[2] top.microprocessador_tb.tb_debug_ir_instr[1] top.microprocessador_tb.tb_debug_ir_instr[0]
 @28
 top.microprocessador_tb.tb_debug_ir_instr[17]
@@ -46,7 +46,7 @@ top.microprocessador_tb.tb_debug_ir_instr[3]
 top.microprocessador_tb.tb_debug_ir_instr[2]
 top.microprocessador_tb.tb_debug_ir_instr[1]
 top.microprocessador_tb.tb_debug_ir_instr[0]
-@1401200
+@1401201
 -group_end
 @24
 #{top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[15:0]} top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[15] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[14] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[13] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[12] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[11] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[10] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[9] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[8] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[7] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[6] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[5] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[4] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[3] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[2] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[1] top.microprocessador_tb.micro_inst.ula_acc_bank_inst.bank_inst.data_out_0_s[0]
