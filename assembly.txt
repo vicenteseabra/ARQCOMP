@@ -1,48 +1,54 @@
---PREENCHE GERAL DA RAM--
- LD R0, 0      ; R0 = 0
-SW (R0), ACC  ; Mem[0] <= ACC
-  -- Loop:
-LD ACC, 1     ; ACC = 1
-ADD ACC, R0   ; ACC = ACC + R0
-MOV R0, ACC   ; R0 = ACC
-CMPI 33       ; Compara ACC com o valor 33
-BNE 2         ; Se ACC != 33, volta para o endereço 2 (Loop)
+Código Assembly - Crivo de Eratóstenes
 
-LD R2 3
-LD R0 1
+Seção 1: Preenchimento da RAM (endereços 0-33 com valor 1)
 
--- Verifica se é zero em R0
+; Endereço 0-7: Loop de preenchimento da RAM
+0:    LD R0, 0        ; R0 = 0 (contador/endereço)
+1:    SW (R0), ACC    ; mem[R0] = ACC (valor atual do acumulador)
+2:    LD ACC, 1       ; ACC = 1 (valor a ser armazenado)
+3:    ADD R0          ; ACC = ACC + R0 (incrementa contador)
+4:    MOV R0, ACC     ; R0 = ACC (atualiza contador)
+5:    CMPI 33         ; Compara ACC com 33
+6:    BNE 1           ; Se ACC != 33, volta para endereço 1
+7:    NOP             ; Não faz nada
 
--Se R0 ja é R2
-MOV Acc, R0
-CMP R2
-BNE (pula uma linha)
-JUMP (pula 14 linhas a partir daqui)
+Seção 2: Algoritmo do Crivo de Eratóstenes
+; Endereços 8-10: Inicialização das variáveis
+8:    LD R2, 2        ; R2 = 2 (primeiro primo candidato)
+9:    LD R3, 14       ; R3 = 14 (limite para busca de primos)
+10:   LD R4, 33       ; R4 = 33 (limite geral da RAM)
 
--soma 1 no R0
-LD Acc 1
-ADD R0
-MOV R0 ACC
+; Endereços 11-21: Loop principal - procura próximo primo não marcado
+11:   LW R0, (R2)     ; R0 = mem[R2] (carrega valor da posição R2)
+12:   MOV ACC, R0     ; ACC = R0
+13:   CMPI 0          ; Compara ACC com 0
+14:   BNE 22          ; Se mem[R2] != 0, vai para endereço 22 (primo encontrado)
 
---verifica se esta zerado o valor da ram
-LW R1 (R0)
-MOV ACC R1
-CMP R0
-BCC (Volta 10 instruções)
+; Endereços 15-21: Primo foi marcado como não-primo, avança para próximo
+15:   LD ACC, 1       ; ACC = 1
+16:   ADD R2          ; ACC = ACC + R2 (R2 + 1)
+17:   MOV R2, ACC     ; R2 = ACC (incrementa R2)
+18:   MOV ACC, R2     ; ACC = R2
+19:   CMP R3          ; Compara R2 com R3 (limite 14)
+20:   BCS 34          ; Se R2 >= 14, termina algoritmo (vai para endereço 34)
+21:   JMP 11          ; Volta para testar próximo candidato
 
+; Endereços 22-23: Primo encontrado - armazena para visualização
+22:   MOV ACC, R2     ; ACC = R2 (primo atual)
+23:   MOV R5, ACC     ; R5 = ACC (ARMAZENA PRIMO EM R5 PARA VISUALIZAÇÃO!)
 
-MOV Acc R0
-ADD R1
-MOV R0 Acc
+; Endereços 24-26: Prepara para eliminar múltiplos do primo
+24:   MOV ACC, R2     ; ACC = R2 (primo atual)
+25:   ADD R2          ; ACC = ACC + R2 (primeiro múltiplo = 2 * primo)
+26:   MOV R1, ACC     ; R1 = ACC (R1 = primeiro múltiplo)
 
-SW R3 Acc
-
-CMPI 32
-BNE (volta 6 instruções)
-
-LD Acc 1
-Add R2
-MOV R2 Acc
-
-CMPI 13
-BNE (volta 19 instruções)
+; Endereços 27-35: Loop interno - marca múltiplos como não-primo
+27:   MOV ACC, R1     ; ACC = R1 (múltiplo atual)
+28:   CMP R4          ; Compara R1 com R4 (limite 33)
+29:   BCS 15          ; Se R1 >= 33, vai buscar próximo primo
+30:   LD ACC, 0       ; ACC = 0
+31:   SW (R1), ACC    ; mem[R1] = 0 (marca múltiplo como não-primo)
+32:   MOV ACC, R1     ; ACC = R1
+33:   ADD R2          ; ACC = ACC + R2 (próximo múltiplo)
+34:   MOV R1, ACC     ; R1 = ACC (atualiza múltiplo)
+35:  
