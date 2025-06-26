@@ -53,17 +53,18 @@ architecture a_rom of rom is
         -- R3 = limite para primos (13)
         -- R1 = múltiplo atual
         -- R4 = limite geral (33)
-
+        -- R5 = primo atual (para visualização)
+        
         -- Inicialização
         8  => "0100"&"0"&"010"&"0000000010",  -- LD R2, 2           ; R2 = 2 (primeiro primo)
-        9  => "0100"&"0"&"011"&"0000001101",  -- LD R3, 13          ; R3 = 13 (limite para primos)
+        9  => "0100"&"0"&"011"&"0000001110",  -- LD R3, 14          ; R3 = 14 (limite para primos)
         10 => "0100"&"0"&"100"&"0000100001",  -- LD R4, 33          ; R4 = 33 (limite geral)
 
         -- Loop principal: procura próximo primo não marcado
         11 => "0001"&"0"&"000"&"0000000"&"010", -- LW R0, (R2)        ; R0 = mem[R2]
         12 => "0111"&"00000000000"&"000",     -- MOV ACC, R0        ; ACC = R0
         13 => "1001"&"0000"&"0000000000",     -- CMPI 0             ; ACC == 0?
-        14 => "1101"&"00"&"0000010111"&"00",  -- BNE 23             ; Se mem[R2] != 0, vai processar primo
+        14 => "1101"&"00"&"0000010110"&"00",  -- BNE 22             ; Se mem[R2] != 0, encontrou primo não marcado
 
         -- Primo foi marcado, avança para próximo candidato
         15 => "0100"&"1"&"000"&"0000000001",  -- LD ACC, 1
@@ -73,27 +74,30 @@ architecture a_rom of rom is
         -- Verifica se já passou do limite de primos
         18 => "0111"&"00000000000"&"010",     -- MOV ACC, R2        ; ACC = R2
         19 => "1000"&"00000000000"&"011",     -- CMP R3             ; Compara R2 com R3 (13)
-        20 => "1110"&"01"&"0000100010"&"00",  -- BCS 34             ; Se R2 > 13, termina (vai para o loop infinito)
+        20 => "1110"&"01"&"0000100010"&"00",  -- BCS 34             ; Se R2 > 13, termina
         21 => "1111"&"00"&"0000001011"&"00",  -- JMP 11             ; Volta para testar próximo primo
-        22 => "000000000000000000",            -- NOP
+
+        -- Se chegou aqui, R2 é um primo não marcado
+        22 => "0111"&"00000000000"&"010",     -- MOV ACC, R2        ; ACC = R2 (primo atual)
+        23 => "0101"&"0"&"101"&"0000000000",  -- MOV R5, ACC        ; R5 = primo atual (PARA VISUALIZAÇÃO!)
 
         -- Encontrou primo não marcado, elimina seus múltiplos
-        23 => "0111"&"00000000000"&"010",     -- MOV ACC, R2        ; ACC = R2 (primo atual)
-        24 => "0010"&"00000000000"&"010",     -- ADD R2             ; ACC = R2 + R2 (primeiro múltiplo)
-        25 => "0101"&"0"&"001"&"0000000000",  -- MOV R1, ACC        ; R1 = primeiro múltiplo
+        24 => "0111"&"00000000000"&"010",     -- MOV ACC, R2        ; ACC = R2 (primo atual)
+        25 => "0010"&"00000000000"&"010",     -- ADD R2             ; ACC = R2 + R2 (primeiro múltiplo)
+        26 => "0101"&"0"&"001"&"0000000000",  -- MOV R1, ACC        ; R1 = primeiro múltiplo
 
         -- Loop interno: marca múltiplos
-        26 => "0111"&"00000000000"&"001",     -- MOV ACC, R1        ; ACC = R1
-        27 => "1000"&"00000000000"&"100",     -- CMP R4             ; Compara R1 com 33
-        28 => "1110"&"01"&"0000001111"&"00",  -- BCS 15             ; Se R1 >= 33, vai para próximo primo
+        27 => "0111"&"00000000000"&"001",     -- MOV ACC, R1        ; ACC = R1
+        28 => "1000"&"00000000000"&"100",     -- CMP R4             ; Compara R1 com 33
+        29 => "1110"&"01"&"0000001111"&"00",  -- BCS 15             ; Se R1 >= 33, vai para próximo primo
 
-        29 => "0100"&"1"&"000"&"0000000000",  -- LD ACC, 0          ; ACC = 0
-        30 => "0110"&"00000000000"&"001",     -- SW (R1), ACC       ; mem[R1] = 0 (marca como não primo)
+        30 => "0100"&"1"&"000"&"0000000000",  -- LD ACC, 0          ; ACC = 0
+        31 => "0110"&"00000000000"&"001",     -- SW (R1), ACC       ; mem[R1] = 0 (marca como não primo)
 
-        31 => "0111"&"00000000000"&"001",     -- MOV ACC, R1        ; ACC = R1
-        32 => "0010"&"00000000000"&"010",     -- ADD R2             ; ACC = R1 + R2 (próximo múltiplo)
-        33 => "0101"&"0"&"001"&"0000000000",  -- MOV R1, ACC        ; R1 = próximo múltiplo
-        34 => "1111"&"00"&"0000011010"&"00",  -- JMP 26             ; Volta para marcar próximo múltiplo
+        32 => "0111"&"00000000000"&"001",     -- MOV ACC, R1        ; ACC = R1
+        33 => "0010"&"00000000000"&"010",     -- ADD R2             ; ACC = R1 + R2 (próximo múltiplo)
+        34 => "0101"&"0"&"001"&"0000000000",  -- MOV R1, ACC        ; R1 = próximo múltiplo
+        35 => "1111"&"00"&"0000011011"&"00",  -- JMP 27             ; Volta para marcar próximo múltiplo
 
         -- Preenche o resto com NOPs
         others => "000000000000000000"  -- NOP
