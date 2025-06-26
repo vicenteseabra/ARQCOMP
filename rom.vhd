@@ -50,14 +50,14 @@ architecture a_rom of rom is
 
         -- Seção 2: Crivo de Eratóstenes com loop automático
         -- R2 = primo atual (começa com 2)
-        -- R3 = limite para primos (13)
+        -- R3 = limite para primos (32)
         -- R1 = múltiplo atual
         -- R4 = limite geral (33)
         -- R5 = primo atual (para visualização)
-        
+
         -- Inicialização
         8  => "0100"&"0"&"010"&"0000000010",  -- LD R2, 2           ; R2 = 2 (primeiro primo)
-        9  => "0100"&"0"&"011"&"0000001110",  -- LD R3, 14          ; R3 = 14 (limite para primos)
+        9  => "0100"&"0"&"011"&"0000100000",  -- LD R3, 32          ; R3 = 14 (limite para primos)
         10 => "0100"&"0"&"100"&"0000100001",  -- LD R4, 33          ; R4 = 33 (limite geral)
 
         -- Loop principal: procura próximo primo não marcado
